@@ -227,7 +227,7 @@ bool CodeRange::CommitRawMemory(Address start, size_t length) {
 
 
 bool CodeRange::UncommitRawMemory(Address start, size_t length) {
-  memset(start + Offset(), 0, length);
+  //memset(start + Offset(), 0, length);
   return true;
   //return code_range_->Uncommit(start, length);
 }

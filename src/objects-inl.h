@@ -93,8 +93,7 @@ PropertyDetails PropertyDetails::AsDeleted() const {
       if (this->GetIsolate()->code_range()->InCodeRange((Address)this, offset)) \
         diff = this->GetIsolate()->code_range()->Offset();              \
     WRITE_FIELD(this+diff, offset, value);                              \
-    CONDITIONAL_WRITE_BARRIER(GetHeap(),                                \
-      reinterpret_cast<holder*>(this+diff), offset, value, mode);       \
+    CONDITIONAL_WRITE_BARRIER(GetHeap(), this, offset, value, mode);    \
   }
 
 

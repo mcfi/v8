@@ -27,14 +27,14 @@ static const int kNoCodeAgeSequenceLength = kPointerSize == kInt64Size ? 6 : 17;
 
 
 void Assembler::emitl(uint32_t x) {
-  Memory::uint32_at(pc_) = x;
+  Memory::uint32_at(pc_+diff_) = x;
   pc_ += sizeof(uint32_t);
 }
 
 
 void Assembler::emitp(void* x, RelocInfo::Mode rmode) {
   uintptr_t value = reinterpret_cast<uintptr_t>(x);
-  Memory::uintptr_at(pc_) = value;
+  Memory::uintptr_at(pc_+diff_) = value;
   if (!RelocInfo::IsNone(rmode)) {
     RecordRelocInfo(rmode, value);
   }
@@ -43,13 +43,13 @@ void Assembler::emitp(void* x, RelocInfo::Mode rmode) {
 
 
 void Assembler::emitq(uint64_t x) {
-  Memory::uint64_at(pc_) = x;
+  Memory::uint64_at(pc_+diff_) = x;
   pc_ += sizeof(uint64_t);
 }
 
 
 void Assembler::emitw(uint16_t x) {
-  Memory::uint16_at(pc_) = x;
+  Memory::uint16_at(pc_+diff_) = x;
   pc_ += sizeof(uint16_t);
 }
 

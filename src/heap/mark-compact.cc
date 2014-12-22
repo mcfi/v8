@@ -3327,7 +3327,10 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
       if (free_end != free_start) {
         int size = static_cast<int>(free_end - free_start);
         if (free_space_mode == ZAP_FREE_SPACE) {
-          memset(free_start, 0xcc, size);
+          if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size))
+            memset(free_start+p->heap()->isolate()->code_range()->Offset(), 0xcc, size);
+          else
+            memset(free_start, 0xcc, size);
         }
         freed_bytes = Free<parallelism>(space, free_list, free_start, size);
         max_freed_bytes = Max(freed_bytes, max_freed_bytes);
@@ -3361,7 +3364,10 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
   if (free_start != p->area_end()) {
     int size = static_cast<int>(p->area_end() - free_start);
     if (free_space_mode == ZAP_FREE_SPACE) {
-      memset(free_start, 0xcc, size);
+      if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size))
+        memset(free_start+p->heap()->isolate()->code_range()->Offset(), 0xcc, size);
+      else
+        memset(free_start, 0xcc, size);
     }
     freed_bytes = Free<parallelism>(space, free_list, free_start, size);
     max_freed_bytes = Max(freed_bytes, max_freed_bytes);

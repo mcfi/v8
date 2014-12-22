@@ -485,7 +485,7 @@ class Assembler : public AssemblerBase {
   // otherwise valid instructions.)
   // This allows for a single, fast space check per instruction.
   static const int kGap = 32;
-
+  ptrdiff_t diff_;
  public:
   // Create an assembler. Instructions and relocation information are emitted
   // into a buffer, with the instructions starting from the beginning and the
@@ -500,7 +500,7 @@ class Assembler : public AssemblerBase {
   // for code generation and assumes its size to be buffer_size. If the buffer
   // is too small, a fatal error occurs. No deallocation of the buffer is done
   // upon destruction of the assembler.
-  Assembler(Isolate* isolate, void* buffer, int buffer_size);
+  Assembler(Isolate* isolate, void* buffer, int buffer_size, ptrdiff_t diff = 0);
   virtual ~Assembler() { }
 
   // GetCode emits any pending (non-emitted) code and fills the descriptor
@@ -1166,7 +1166,10 @@ class Assembler : public AssemblerBase {
   // code emission
   void GrowBuffer();
 
-  void emit(byte x) { *pc_++ = x; }
+  void emit(byte x) {
+    *(pc_ + diff_) = x;
+    pc_++;
+  }
   inline void emitl(uint32_t x);
   inline void emitp(void* x, RelocInfo::Mode rmode);
   inline void emitq(uint64_t x);

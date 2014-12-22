@@ -4859,8 +4859,9 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
                             BackEdgeState target_state,
                             Code* replacement_code) {
   Address call_target_address = pc - kIntSize;
-  Address jns_instr_address = call_target_address - 3;
-  Address jns_offset_address = call_target_address - 2;
+  ptrdiff_t diff = unoptimized_code->GetIsolate()->code_range()->Offset();
+  Address jns_instr_address = call_target_address - 3 + diff;
+  Address jns_offset_address = call_target_address - 2 + diff;
 
   switch (target_state) {
     case INTERRUPT:
@@ -4885,7 +4886,9 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
 
   Assembler::set_target_address_at(call_target_address,
                                    unoptimized_code,
-                                   replacement_code->entry());
+                                   replacement_code->entry(),
+                                   FLUSH_ICACHE_IF_NEEDED,
+                                   diff);
   unoptimized_code->GetHeap()->incremental_marking()->RecordCodeTargetPatch(
       unoptimized_code, call_target_address, replacement_code);
 }

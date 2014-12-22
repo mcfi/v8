@@ -228,10 +228,11 @@ bool Operand::AddressUsesRegister(Register reg) const {
 static void InitCoverageLog();
 #endif
 
-Assembler::Assembler(Isolate* isolate, void* buffer, int buffer_size)
+Assembler::Assembler(Isolate* isolate, void* buffer, int buffer_size, ptrdiff_t diff)
     : AssemblerBase(isolate, buffer, buffer_size),
       code_targets_(100),
-      positions_recorder_(this) {
+      positions_recorder_(this),
+      diff_(diff){
   // Clear the buffer in debug mode unless it was provided by the
   // caller in which case we can't be sure it's okay to overwrite
   // existing code in it.

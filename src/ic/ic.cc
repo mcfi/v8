@@ -468,7 +468,9 @@ void IC::InvalidateMaps(Code* stub) {
     RelocInfo::Mode mode = it.rinfo()->rmode();
     if (mode == RelocInfo::EMBEDDED_OBJECT &&
         it.rinfo()->target_object()->IsMap()) {
-      it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER);
+      it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER,
+                                    FLUSH_ICACHE_IF_NEEDED,
+                                    stub->GetIsolate()->code_range()->Offset());
     }
   }
   CpuFeatures::FlushICache(stub->instruction_start(), stub->instruction_size());

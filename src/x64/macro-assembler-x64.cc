@@ -21,8 +21,9 @@
 namespace v8 {
 namespace internal {
 
-MacroAssembler::MacroAssembler(Isolate* arg_isolate, void* buffer, int size)
-    : Assembler(arg_isolate, buffer, size),
+MacroAssembler::MacroAssembler(Isolate* arg_isolate, void* buffer, int size,
+                               ptrdiff_t diff)
+  : Assembler(arg_isolate, buffer, size, diff),
       generating_stub_(false),
       has_frame_(false),
       root_array_available_(true) {
@@ -5009,10 +5010,10 @@ bool AreAliased(Register reg1,
 #endif
 
 
-CodePatcher::CodePatcher(byte* address, int size)
+CodePatcher::CodePatcher(byte* address, int size, ptrdiff_t diff)
     : address_(address),
       size_(size),
-      masm_(NULL, address, size + Assembler::kGap) {
+      masm_(NULL, address, size + Assembler::kGap, diff) {
   // Create a new macro assembler pointing to the address of the code to patch.
   // The size is adjusted with kGap on order for the assembler to generate size
   // bytes of instructions without failing with buffer size constraints.

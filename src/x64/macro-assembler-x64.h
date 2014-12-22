@@ -81,7 +81,7 @@ class MacroAssembler: public Assembler {
   // not use isolate-dependent functionality. In this case, it's the
   // responsibility of the caller to never invoke such function on the
   // macro assembler.
-  MacroAssembler(Isolate* isolate, void* buffer, int size);
+  MacroAssembler(Isolate* isolate, void* buffer, int size, ptrdiff_t diff = 0);
 
   // Prevent the use of the RootArray during the lifetime of this
   // scope object.
@@ -1568,7 +1568,7 @@ class MacroAssembler: public Assembler {
 // an assertion.
 class CodePatcher {
  public:
-  CodePatcher(byte* address, int size);
+  CodePatcher(byte* address, int size, ptrdiff_t diff = 0);
   virtual ~CodePatcher();
 
   // Macro assembler to emit code.

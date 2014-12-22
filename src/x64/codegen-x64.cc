@@ -677,11 +677,12 @@ void Code::PatchPlatformCodeAge(Isolate* isolate,
                                 MarkingParity parity) {
   uint32_t young_length = isolate->code_aging_helper()->young_sequence_length();
   if (age == kNoAgeCodeAge) {
-    isolate->code_aging_helper()->CopyYoungSequenceTo(sequence);
+    isolate->code_aging_helper()->CopyYoungSequenceTo((Address)sequence +
+                                                      isolate->code_range()->Offset());
     CpuFeatures::FlushICache(sequence, young_length);
   } else {
     Code* stub = GetCodeAgeStub(isolate, age, parity);
-    CodePatcher patcher(sequence, young_length);
+    CodePatcher patcher(sequence, young_length, isolate->code_range()->Offset());
     patcher.masm()->call(stub->instruction_start());
     patcher.masm()->Nop(
         kNoCodeAgeSequenceLength - Assembler::kShortCallInstructionLength);
