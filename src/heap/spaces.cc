@@ -91,6 +91,7 @@ bool HeapObjectIterator::AdvanceToNextPage() {
 CodeRange::CodeRange(Isolate* isolate)
     : isolate_(isolate),
       code_range_(NULL),
+      shadow_code_(NULL),
       free_list_(0),
       allocation_list_(0),
       current_allocation_block_index_(0) {}
@@ -98,7 +99,7 @@ CodeRange::CodeRange(Isolate* isolate)
 
 bool CodeRange::SetUp(size_t requested) {
   DCHECK(code_range_ == NULL);
-
+  DCHECK(shadow_code_ == NULL);
   if (requested == 0) {
     // When a target requires the code range feature, we put all code objects
     // in a kMaximalCodeRangeSize range of virtual address space, so that
@@ -111,7 +112,7 @@ bool CodeRange::SetUp(size_t requested) {
   }
 
   DCHECK(!kRequiresCodeRange || requested <= kMaximalCodeRangeSize);
-  code_range_ = new base::VirtualMemory(requested);
+  code_range_ = new base::VirtualMemory(requested, &shadow_code_);
   CHECK(code_range_ != NULL);
   if (!code_range_->IsReserved()) {
     delete code_range_;
@@ -226,14 +227,17 @@ bool CodeRange::CommitRawMemory(Address start, size_t length) {
 
 
 bool CodeRange::UncommitRawMemory(Address start, size_t length) {
-  return code_range_->Uncommit(start, length);
+  memset(start + Offset(), 0, length);
+  return true;
+  //return code_range_->Uncommit(start, length);
 }
 
 
 void CodeRange::FreeRawMemory(Address address, size_t length) {
   DCHECK(IsAddressAligned(address, MemoryChunk::kAlignment));
   free_list_.Add(FreeBlock(address, length));
-  code_range_->Uncommit(address, length);
+  memset(address + Offset(), 0, length);
+  //code_range_->Uncommit(address, length);
 }
 
 
@@ -741,8 +745,14 @@ bool MemoryAllocator::UncommitBlock(Address start, size_t size) {
 
 
 void MemoryAllocator::ZapBlock(Address start, size_t size) {
-  for (size_t s = 0; s + kPointerSize <= size; s += kPointerSize) {
-    Memory::Address_at(start + s) = kZapValue;
+  if (!isolate_->code_range()->InCodeRange(start, size)) {
+    for (size_t s = 0; s + kPointerSize <= size; s += kPointerSize) {
+      Memory::Address_at(start + s) = kZapValue;
+    }
+  } else {
+    for (size_t s = 0; s + kPointerSize <= size; s += kPointerSize) {
+      Memory::Address_at(start + s + isolate_->code_range()->Offset()) = kZapValue;
+    }
   }
 }
 
@@ -2012,14 +2022,18 @@ void FreeListNode::set_next(FreeListNode* next) {
   // While we are booting the VM the free space map will actually be null.  So
   // we have to make sure that we don't try to use it for anything at that
   // stage.
+  ptrdiff_t diff = 0;
+  if (this->GetIsolate()->code_range()->InCodeRange(address(), 16))
+    diff = this->GetIsolate()->code_range()->Offset();
   if (map() == GetHeap()->raw_unchecked_free_space_map()) {
     DCHECK(map() == NULL || Size() >= kNextOffset + kPointerSize);
+
     base::NoBarrier_Store(
-        reinterpret_cast<base::AtomicWord*>(address() + kNextOffset),
+        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kNextOffset) + diff),
         reinterpret_cast<base::AtomicWord>(next));
   } else {
     base::NoBarrier_Store(
-        reinterpret_cast<base::AtomicWord*>(address() + kPointerSize),
+        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kPointerSize) + diff),
         reinterpret_cast<base::AtomicWord>(next));
   }
 }
@@ -2348,14 +2362,14 @@ HeapObject* FreeList::Allocate(int size_in_bytes) {
 
   int bytes_left = new_node_size - size_in_bytes;
   DCHECK(bytes_left >= 0);
-
+  /*
 #ifdef DEBUG
   for (int i = 0; i < size_in_bytes / kPointerSize; i++) {
     reinterpret_cast<Object**>(new_node->address())[i] =
         Smi::FromInt(kCodeZapValue);
   }
 #endif
-
+  */
   // The old-space-step might have finished sweeping and restarted marking.
   // Verify that it did not turn the page of the new node into an evacuation
   // candidate.

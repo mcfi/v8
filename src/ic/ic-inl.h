@@ -108,7 +108,9 @@ void IC::SetTargetAtAddress(Address address, Code* target,
   }
 #endif
   Assembler::set_target_address_at(address, constant_pool,
-                                   target->instruction_start());
+                                   target->instruction_start(),
+                                   FLUSH_ICACHE_IF_NEEDED,
+                                   target->GetIsolate()->code_range()->Offset());
   if (heap->gc_state() == Heap::MARK_COMPACT) {
     heap->mark_compact_collector()->RecordCodeTargetPatch(address, target);
   } else {

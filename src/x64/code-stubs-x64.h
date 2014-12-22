@@ -162,25 +162,26 @@ class RecordWriteStub: public PlatformCodeStub {
   }
 
   static void Patch(Code* stub, Mode mode) {
+    ptrdiff_t diff = stub->GetIsolate()->code_range()->Offset();
     switch (mode) {
       case STORE_BUFFER_ONLY:
         DCHECK(GetMode(stub) == INCREMENTAL ||
                GetMode(stub) == INCREMENTAL_COMPACTION);
-        stub->instruction_start()[0] = kTwoByteNopInstruction;
-        stub->instruction_start()[2] = kFiveByteNopInstruction;
+        (stub->instruction_start()+diff)[0] = kTwoByteNopInstruction;
+        (stub->instruction_start()+diff)[2] = kFiveByteNopInstruction;
         break;
       case INCREMENTAL:
         DCHECK(GetMode(stub) == STORE_BUFFER_ONLY);
-        stub->instruction_start()[0] = kTwoByteJumpInstruction;
+        (stub->instruction_start()+diff)[0] = kTwoByteJumpInstruction;
         break;
       case INCREMENTAL_COMPACTION:
         DCHECK(GetMode(stub) == STORE_BUFFER_ONLY);
-        stub->instruction_start()[0] = kTwoByteNopInstruction;
-        stub->instruction_start()[2] = kFiveByteJumpInstruction;
+        (stub->instruction_start()+diff)[0] = kTwoByteNopInstruction;
+        (stub->instruction_start()+diff)[2] = kFiveByteJumpInstruction;
         break;
     }
     DCHECK(GetMode(stub) == mode);
-    CpuFeatures::FlushICache(stub->instruction_start(), 7);
+    CpuFeatures::FlushICache(stub->instruction_start()+diff, 7);
   }
 
   DEFINE_NULL_CALL_INTERFACE_DESCRIPTOR();

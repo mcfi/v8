@@ -3479,7 +3479,7 @@ AllocationResult Heap::CopyCode(Code* code) {
   // Copy code object.
   Address old_addr = code->address();
   Address new_addr = result->address();
-  CopyBlock(new_addr, old_addr, obj_size);
+  CopyBlock(new_addr + isolate_->code_range()->Offset(), old_addr, obj_size);
   Code* new_code = Code::cast(result);
 
   // Update the constant pool.

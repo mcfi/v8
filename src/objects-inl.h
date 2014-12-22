@@ -76,14 +76,25 @@ PropertyDetails PropertyDetails::AsDeleted() const {
 
 #define INT_ACCESSORS(holder, name, offset)                                   \
   int holder::name() const { return READ_INT_FIELD(this, offset); }           \
-  void holder::set_##name(int value) { WRITE_INT_FIELD(this, offset, value); }
+  void holder::set_##name(int value) {                                  \
+    ptrdiff_t diff = 0;                                                 \
+    if (std::is_same<holder, Code>())                                   \
+      if (this->GetIsolate()->code_range()->InCodeRange((Address)this, offset)) \
+        diff = this->GetIsolate()->code_range()->Offset();              \
+    WRITE_INT_FIELD(this+diff, offset, value);                          \
+  }
 
 
-#define ACCESSORS(holder, name, type, offset)                                 \
+#define ACCESSORS(holder, name, type, offset)                           \
   type* holder::name() const { return type::cast(READ_FIELD(this, offset)); } \
-  void holder::set_##name(type* value, WriteBarrierMode mode) {               \
-    WRITE_FIELD(this, offset, value);                                         \
-    CONDITIONAL_WRITE_BARRIER(GetHeap(), this, offset, value, mode);          \
+  void holder::set_##name(type* value, WriteBarrierMode mode) {         \
+    ptrdiff_t diff = 0;                                                 \
+    if (std::is_same<holder, Code>())                                   \
+      if (this->GetIsolate()->code_range()->InCodeRange((Address)this, offset)) \
+        diff = this->GetIsolate()->code_range()->Offset();              \
+    WRITE_FIELD(this+diff, offset, value);                              \
+    CONDITIONAL_WRITE_BARRIER(GetHeap(),                                \
+      reinterpret_cast<holder*>(this+diff), offset, value, mode);       \
   }
 
 
@@ -120,7 +131,14 @@ PropertyDetails PropertyDetails::AsDeleted() const {
     return Smi::cast(value)->value();                          \
   }                                                            \
   void holder::nobarrier_set_##name(int value) {               \
-    NOBARRIER_WRITE_FIELD(this, offset, Smi::FromInt(value));  \
+    if (std::is_same<holder, FreeSpace>()) {                            \
+      ptrdiff_t diff = 0;                                               \
+      if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(int))) { \
+        diff = this->GetIsolate()->code_range()->Offset();              \
+      }                                                                 \
+      NOBARRIER_WRITE_FIELD(this + diff, offset, Smi::FromInt(value));  \
+    } else                                                              \
+      NOBARRIER_WRITE_FIELD(this, offset, Smi::FromInt(value));         \
   }
 
 #define BOOL_GETTER(holder, field, name, offset)           \
@@ -1444,20 +1462,33 @@ MapWord HeapObject::map_word() const {
 
 
 void HeapObject::set_map_word(MapWord map_word) {
+  ptrdiff_t diff = 0;
+  if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
+    diff = this->GetIsolate()->code_range()->Offset();
+  }  
   NOBARRIER_WRITE_FIELD(
-      this, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
+      (Address)this+diff, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
 }
 
 
 MapWord HeapObject::synchronized_map_word() const {
+  ptrdiff_t diff = 0;
+  if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
+    diff = this->GetIsolate()->code_range()->Offset();
+  }  
   return MapWord(
-      reinterpret_cast<uintptr_t>(ACQUIRE_READ_FIELD(this, kMapOffset)));
+      reinterpret_cast<uintptr_t>(ACQUIRE_READ_FIELD(
+      (Address)this+diff, kMapOffset)));
 }
 
 
 void HeapObject::synchronized_set_map_word(MapWord map_word) {
+  ptrdiff_t diff = 0;
+  if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
+    diff = this->GetIsolate()->code_range()->Offset();
+  }
   RELEASE_WRITE_FIELD(
-      this, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
+      (Address)this+diff, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
 }
 
 
@@ -4614,7 +4645,7 @@ void DependentCode::ExtendGroup(DependencyGroup group) {
 
 void Code::set_flags(Code::Flags flags) {
   STATIC_ASSERT(Code::NUMBER_OF_KINDS <= KindField::kMax + 1);
-  WRITE_INT_FIELD(this, kFlagsOffset, flags);
+  WRITE_INT_FIELD(this+this->GetIsolate()->code_range()->Offset(), kFlagsOffset, flags);
 }
 
 
@@ -4657,12 +4688,12 @@ Code::StubType Code::type() {
 
 // For initialization.
 void Code::set_raw_kind_specific_flags1(int value) {
-  WRITE_INT_FIELD(this, kKindSpecificFlags1Offset, value);
+  WRITE_INT_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, value);
 }
 
 
 void Code::set_raw_kind_specific_flags2(int value) {
-  WRITE_INT_FIELD(this, kKindSpecificFlags2Offset, value);
+  WRITE_INT_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags2Offset, value);
 }
 
 
@@ -4680,7 +4711,7 @@ inline bool Code::is_hydrogen_stub() {
 inline void Code::set_is_crankshafted(bool value) {
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags2Offset);
   int updated = IsCrankshaftedField::update(previous, value);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags2Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags2Offset, updated);
 }
 
 
@@ -4695,7 +4726,7 @@ inline void Code::set_is_turbofanned(bool value) {
   DCHECK(kind() == OPTIMIZED_FUNCTION || kind() == STUB);
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = IsTurbofannedField::update(previous, value);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4707,7 +4738,7 @@ bool Code::optimizable() {
 
 void Code::set_optimizable(bool value) {
   DCHECK_EQ(FUNCTION, kind());
-  WRITE_BYTE_FIELD(this, kOptimizableOffset, value ? 1 : 0);
+  WRITE_BYTE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kOptimizableOffset, value ? 1 : 0);
 }
 
 
@@ -4722,7 +4753,7 @@ void Code::set_has_deoptimization_support(bool value) {
   DCHECK_EQ(FUNCTION, kind());
   byte flags = READ_BYTE_FIELD(this, kFullCodeFlags);
   flags = FullCodeFlagsHasDeoptimizationSupportField::update(flags, value);
-  WRITE_BYTE_FIELD(this, kFullCodeFlags, flags);
+  WRITE_BYTE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kFullCodeFlags, flags);
 }
 
 
@@ -4737,7 +4768,7 @@ void Code::set_has_debug_break_slots(bool value) {
   DCHECK_EQ(FUNCTION, kind());
   byte flags = READ_BYTE_FIELD(this, kFullCodeFlags);
   flags = FullCodeFlagsHasDebugBreakSlotsField::update(flags, value);
-  WRITE_BYTE_FIELD(this, kFullCodeFlags, flags);
+  WRITE_BYTE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kFullCodeFlags, flags);
 }
 
 
@@ -4752,7 +4783,7 @@ void Code::set_compiled_optimizable(bool value) {
   DCHECK_EQ(FUNCTION, kind());
   byte flags = READ_BYTE_FIELD(this, kFullCodeFlags);
   flags = FullCodeFlagsIsCompiledOptimizable::update(flags, value);
-  WRITE_BYTE_FIELD(this, kFullCodeFlags, flags);
+  WRITE_BYTE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kFullCodeFlags, flags);
 }
 
 
@@ -4768,7 +4799,7 @@ void Code::set_allow_osr_at_loop_nesting_level(int level) {
   DCHECK(level >= 0 && level <= kMaxLoopNestingMarker);
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags2Offset);
   int updated = AllowOSRAtLoopNestingLevelField::update(previous, level);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags2Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags2Offset, updated);
 }
 
 
@@ -4781,7 +4812,7 @@ int Code::profiler_ticks() {
 void Code::set_profiler_ticks(int ticks) {
   DCHECK(ticks < 256);
   if (kind() == FUNCTION) {
-    WRITE_BYTE_FIELD(this, kProfilerTicksOffset, ticks);
+    WRITE_BYTE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kProfilerTicksOffset, ticks);
   }
 }
 
@@ -4794,7 +4825,7 @@ int Code::builtin_index() {
 
 void Code::set_builtin_index(int index) {
   DCHECK_EQ(BUILTIN, kind());
-  WRITE_INT32_FIELD(this, kKindSpecificFlags1Offset, index);
+  WRITE_INT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, index);
 }
 
 
@@ -4810,7 +4841,7 @@ void Code::set_stack_slots(unsigned slots) {
   DCHECK(is_crankshafted());
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = StackSlotsField::update(previous, slots);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4827,7 +4858,7 @@ void Code::set_safepoint_table_offset(unsigned offset) {
   DCHECK(IsAligned(offset, static_cast<unsigned>(kIntSize)));
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags2Offset);
   int updated = SafepointTableOffsetField::update(previous, offset);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags2Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags2Offset, updated);
 }
 
 
@@ -4844,7 +4875,7 @@ void Code::set_back_edge_table_offset(unsigned offset) {
   offset = offset >> kPointerSizeLog2;
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags2Offset);
   int updated = BackEdgeTableOffsetField::update(previous, offset);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags2Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags2Offset, updated);
 }
 
 
@@ -4870,7 +4901,7 @@ void Code::set_has_function_cache(bool flag) {
   DCHECK(kind() == STUB);
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = HasFunctionCacheField::update(previous, flag);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4886,7 +4917,7 @@ void Code::set_marked_for_deoptimization(bool flag) {
   DCHECK(!flag || AllowDeoptimization::IsAllowed(GetIsolate()));
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = MarkedForDeoptimizationField::update(previous, flag);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4900,7 +4931,7 @@ void Code::mark_as_weak_stub() {
   DCHECK(CanBeWeakStub());
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = WeakStubField::update(previous, true);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4914,7 +4945,7 @@ void Code::mark_as_invalidated_weak_stub() {
   DCHECK(is_inline_cache_stub());
   int previous = READ_UINT32_FIELD(this, kKindSpecificFlags1Offset);
   int updated = InvalidatedWeakStubField::update(previous, true);
-  WRITE_UINT32_FIELD(this, kKindSpecificFlags1Offset, updated);
+  WRITE_UINT32_FIELD(this+this->GetIsolate()->code_range()->Offset(), kKindSpecificFlags1Offset, updated);
 }
 
 
@@ -4946,8 +4977,10 @@ ConstantPoolArray* Code::constant_pool() {
 
 void Code::set_constant_pool(Object* value) {
   DCHECK(value->IsConstantPoolArray());
-  WRITE_FIELD(this, kConstantPoolOffset, value);
-  WRITE_BARRIER(GetHeap(), this, kConstantPoolOffset, value);
+  WRITE_FIELD(this+this->GetIsolate()->code_range()->Offset(), kConstantPoolOffset, value);
+  WRITE_BARRIER(GetHeap(),
+                reinterpret_cast<Code*>(this+this->GetIsolate()->code_range()->Offset()),
+                kConstantPoolOffset, value);
 }
 
 

@@ -560,7 +560,8 @@ void CompareIC::Clear(Isolate* isolate, Address address, Code* target,
   if (stub.state() != CompareICState::KNOWN_OBJECT) return;
   SetTargetAtAddress(address, GetRawUninitialized(isolate, stub.op()),
                      constant_pool);
-  PatchInlinedSmiCode(address, DISABLE_INLINED_SMI_CHECK);
+  PatchInlinedSmiCode(address, DISABLE_INLINED_SMI_CHECK,
+                      target->GetIsolate()->code_range()->Offset());
 }
 
 
@@ -2273,9 +2274,11 @@ MaybeHandle<Object> BinaryOpIC::Transition(
 
   // Patch the inlined smi code as necessary.
   if (!old_state.UseInlinedSmiCode() && state.UseInlinedSmiCode()) {
-    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK);
+    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK,
+                        isolate()->code_range()->Offset());
   } else if (old_state.UseInlinedSmiCode() && !state.UseInlinedSmiCode()) {
-    PatchInlinedSmiCode(address(), DISABLE_INLINED_SMI_CHECK);
+    PatchInlinedSmiCode(address(), DISABLE_INLINED_SMI_CHECK,
+                        isolate()->code_range()->Offset());
   }
 
   return result;
@@ -2365,7 +2368,8 @@ Code* CompareIC::UpdateCaches(Handle<Object> x, Handle<Object> y) {
 
   // Activate inlined smi code.
   if (old_stub.state() == CompareICState::UNINITIALIZED) {
-    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK);
+    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK,
+                        isolate()->code_range()->Offset());
   }
 
   return *new_target;

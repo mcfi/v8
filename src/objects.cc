@@ -10108,7 +10108,7 @@ void Code::InvalidateEmbeddedObjects() {
 
 void Code::Relocate(intptr_t delta) {
   for (RelocIterator it(this, RelocInfo::kApplyMask); !it.done(); it.next()) {
-    it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH);
+    it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate()->code_range()->Offset());
   }
   CpuFeatures::FlushICache(instruction_start(), instruction_size());
 }
@@ -10118,11 +10118,11 @@ void Code::CopyFrom(const CodeDesc& desc) {
   DCHECK(Marking::Color(this) == Marking::WHITE_OBJECT);
 
   // copy code
-  CopyBytes(instruction_start(), desc.buffer,
+  CopyBytes((Address)instruction_start()+this->GetIsolate()->code_range()->Offset(), desc.buffer,
             static_cast<size_t>(desc.instr_size));
 
   // copy reloc info
-  CopyBytes(relocation_start(),
+  CopyBytes((Address)relocation_start(),
             desc.buffer + desc.buffer_size - desc.reloc_size,
             static_cast<size_t>(desc.reloc_size));
 
@@ -10136,14 +10136,17 @@ void Code::CopyFrom(const CodeDesc& desc) {
   // Needed to find target_object and runtime_entry on X64
   Assembler* origin = desc.origin;
   AllowDeferredHandleDereference embedding_raw_address;
+  
   for (RelocIterator it(this, mode_mask); !it.done(); it.next()) {
     RelocInfo::Mode mode = it.rinfo()->rmode();
     if (mode == RelocInfo::EMBEDDED_OBJECT) {
       Handle<Object> p = it.rinfo()->target_object_handle(origin);
-      it.rinfo()->set_target_object(*p, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH);
+      it.rinfo()->set_target_object(*p, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH,
+                                    this->GetIsolate()->code_range()->Offset());
     } else if (mode == RelocInfo::CELL) {
       Handle<Cell> cell  = it.rinfo()->target_cell_handle();
-      it.rinfo()->set_target_cell(*cell, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH);
+      it.rinfo()->set_target_cell(*cell, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH,
+                                  this->GetIsolate()->code_range()->Offset());
     } else if (RelocInfo::IsCodeTarget(mode)) {
       // rewrite code handles in inline cache targets to direct
       // pointers to the first instruction in the code object
@@ -10151,20 +10154,24 @@ void Code::CopyFrom(const CodeDesc& desc) {
       Code* code = Code::cast(*p);
       it.rinfo()->set_target_address(code->instruction_start(),
                                      SKIP_WRITE_BARRIER,
-                                     SKIP_ICACHE_FLUSH);
+                                     SKIP_ICACHE_FLUSH,
+                                     this->GetIsolate()->code_range()->Offset());
     } else if (RelocInfo::IsRuntimeEntry(mode)) {
       Address p = it.rinfo()->target_runtime_entry(origin);
       it.rinfo()->set_target_runtime_entry(p, SKIP_WRITE_BARRIER,
-                                           SKIP_ICACHE_FLUSH);
+                                           SKIP_ICACHE_FLUSH,
+                                           this->GetIsolate()->code_range()->Offset());
     } else if (mode == RelocInfo::CODE_AGE_SEQUENCE) {
       Handle<Object> p = it.rinfo()->code_age_stub_handle(origin);
       Code* code = Code::cast(*p);
-      it.rinfo()->set_code_age_stub(code, SKIP_ICACHE_FLUSH);
+      it.rinfo()->set_code_age_stub(code, SKIP_ICACHE_FLUSH,
+                                    this->GetIsolate()->code_range()->Offset());
     } else {
-      it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH);
+      it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate()->code_range()->Offset());
     }
   }
-  CpuFeatures::FlushICache(instruction_start(), instruction_size());
+  CpuFeatures::FlushICache(instruction_start() + this->GetIsolate()->code_range()->Offset(),
+                           instruction_size());
 }
 
 
@@ -10271,7 +10278,10 @@ void Code::FindAndReplace(const FindAndReplacePattern& pattern) {
     if (object->IsHeapObject()) {
       Map* map = HeapObject::cast(object)->map();
       if (map == *pattern.find_[current_pattern]) {
-        info->set_target_object(*pattern.replace_[current_pattern]);
+        info->set_target_object(*pattern.replace_[current_pattern],
+                                UPDATE_WRITE_BARRIER,
+                                FLUSH_ICACHE_IF_NEEDED,
+                                this->GetIsolate()->code_range()->Offset());
         if (++current_pattern == pattern.count_) return;
       }
     }

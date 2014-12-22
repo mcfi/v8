@@ -319,7 +319,7 @@ class VirtualMemory {
   VirtualMemory();
 
   // Reserves virtual memory with size.
-  explicit VirtualMemory(size_t size);
+  explicit VirtualMemory(size_t size, void** shadow_code_heap = NULL);
 
   // Reserves virtual memory containing an area of the given size that
   // is aligned per alignment. This may not be at the position returned
@@ -381,7 +381,7 @@ class VirtualMemory {
     from->Reset();
   }
 
-  static void* ReserveRegion(size_t size);
+  static void* ReserveRegion(size_t size, void** shadow_code_heap = NULL);
 
   static bool CommitRegion(void* base, size_t size, bool is_executable);
 

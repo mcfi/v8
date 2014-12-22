@@ -521,7 +521,8 @@ class Assembler : public AssemblerBase {
                                            ConstantPoolArray* constant_pool,
                                            Address target,
                                            ICacheFlushMode icache_flush_mode =
-                                               FLUSH_ICACHE_IF_NEEDED) ;
+                                           FLUSH_ICACHE_IF_NEEDED,
+                                           ptrdiff_t diff = 0) ;
   static inline Address target_address_at(Address pc, Code* code) {
     ConstantPoolArray* constant_pool = code ? code->constant_pool() : NULL;
     return target_address_at(pc, constant_pool);
@@ -530,9 +531,10 @@ class Assembler : public AssemblerBase {
                                            Code* code,
                                            Address target,
                                            ICacheFlushMode icache_flush_mode =
-                                               FLUSH_ICACHE_IF_NEEDED) {
+                                           FLUSH_ICACHE_IF_NEEDED,                                  
+                                           ptrdiff_t diff = 0) {
     ConstantPoolArray* constant_pool = code ? code->constant_pool() : NULL;
-    set_target_address_at(pc, constant_pool, target, icache_flush_mode);
+    set_target_address_at(pc, constant_pool, target, icache_flush_mode, diff);
   }
 
   // Return the code target address at a call site from the return address

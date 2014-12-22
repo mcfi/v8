@@ -300,8 +300,8 @@ static const int kMmapFdOffset = 0;
 VirtualMemory::VirtualMemory() : address_(NULL), size_(0) { }
 
 
-VirtualMemory::VirtualMemory(size_t size)
-    : address_(ReserveRegion(size)), size_(size) { }
+VirtualMemory::VirtualMemory(size_t size, void** shadow_code_heap)
+    : address_(ReserveRegion(size, shadow_code_heap)), size_(size) { }
 
 
 VirtualMemory::VirtualMemory(size_t size, size_t alignment)
@@ -383,30 +383,69 @@ bool VirtualMemory::Guard(void* address) {
 }
 
 
-void* VirtualMemory::ReserveRegion(size_t size) {
-  void* result = mmap(OS::GetRandomMmapAddr(),
-                      size,
-                      PROT_NONE,
-                      MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE,
-                      kMmapFd,
-                      kMmapFdOffset);
+void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
+  if (!shadow_code_heap) {
+    void* result = mmap(OS::GetRandomMmapAddr(),
+                        size,
+                        PROT_NONE,
+                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE,
+                        kMmapFd,
+                        kMmapFdOffset);
 
-  if (result == MAP_FAILED) return NULL;
+    if (result == MAP_FAILED) return NULL;
 
 #if defined(LEAK_SANITIZER)
-  __lsan_register_root_region(result, size);
+    __lsan_register_root_region(result, size);
 #endif
-  return result;
+    return result;
+  } else {
+    int code_heap_fd = shm_open("codeheap", O_RDWR | O_CREAT, 0744);
+    if (code_heap_fd == -1) {
+      fprintf(stderr, "shm_open failed\n");
+      return NULL;
+    }
+    if (0 != ftruncate(code_heap_fd, size)) {
+      fprintf(stderr, "ftruncate failed\n");
+      return NULL;
+    }
+    void* result = mmap(OS::GetRandomMmapAddr(),
+                        size,
+                        PROT_READ | PROT_EXEC,
+                        MAP_SHARED | MAP_NORESERVE,
+                        code_heap_fd,
+                        0);
+
+    if (result == MAP_FAILED) return NULL;
+    
+    *shadow_code_heap = mmap(OS::GetRandomMmapAddr(),
+                             size,
+                             PROT_READ | PROT_WRITE,
+                             MAP_SHARED | MAP_NORESERVE,
+                             code_heap_fd,
+                             0);
+    if (*shadow_code_heap == MAP_FAILED) {
+      munmap(result, size);
+      return NULL;
+    }
+
+    close(code_heap_fd);
+    shm_unlink("codeheap");
+    fprintf(stderr, "%p, %p", result, *shadow_code_heap);
+    return result;
+  }
 }
 
 
 bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
+  if (is_executable)
+    return true;
+
 #if V8_OS_NACL
   // The Native Client port of V8 uses an interpreter,
   // so code pages don't need PROT_EXEC.
   int prot = PROT_READ | PROT_WRITE;
 #else
-  int prot = PROT_READ | PROT_WRITE | (is_executable ? PROT_EXEC : 0);
+  int prot = PROT_READ | (is_executable ? PROT_EXEC : PROT_WRITE);
 #endif
   if (MAP_FAILED == mmap(base,
                          size,

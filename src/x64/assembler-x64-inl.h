@@ -193,8 +193,9 @@ Address Assembler::target_address_at(Address pc,
 void Assembler::set_target_address_at(Address pc,
                                       ConstantPoolArray* constant_pool,
                                       Address target,
-                                      ICacheFlushMode icache_flush_mode) {
-  Memory::int32_at(pc) = static_cast<int32_t>(target - pc - 4);
+                                      ICacheFlushMode icache_flush_mode,
+                                      ptrdiff_t diff) {
+  Memory::int32_at(pc + diff) = static_cast<int32_t>(target - pc - 4);
   if (icache_flush_mode != SKIP_ICACHE_FLUSH) {
     CpuFeatures::FlushICache(pc, sizeof(int32_t));
   }
@@ -224,18 +225,19 @@ Address Assembler::runtime_entry_at(Address pc) {
 // Implementation of RelocInfo
 
 // The modes possibly affected by apply must be in kApplyMask.
-void RelocInfo::apply(intptr_t delta, ICacheFlushMode icache_flush_mode) {
+void RelocInfo::apply(intptr_t delta, ICacheFlushMode icache_flush_mode,
+                      ptrdiff_t diff) {
   bool flush_icache = icache_flush_mode != SKIP_ICACHE_FLUSH;
   if (IsInternalReference(rmode_)) {
     // absolute code pointer inside code object moves with the code object.
-    Memory::Address_at(pc_) += static_cast<int32_t>(delta);
+    Memory::Address_at(pc_ + diff) += static_cast<int32_t>(delta);
     if (flush_icache) CpuFeatures::FlushICache(pc_, sizeof(Address));
   } else if (IsCodeTarget(rmode_) || IsRuntimeEntry(rmode_)) {
-    Memory::int32_at(pc_) -= static_cast<int32_t>(delta);
+    Memory::int32_at(pc_ + diff) -= static_cast<int32_t>(delta);
     if (flush_icache) CpuFeatures::FlushICache(pc_, sizeof(int32_t));
   } else if (rmode_ == CODE_AGE_SEQUENCE) {
     if (*pc_ == kCallOpcode) {
-      int32_t* p = reinterpret_cast<int32_t*>(pc_ + 1);
+      int32_t* p = reinterpret_cast<int32_t*>(pc_ + diff + 1);
       *p -= static_cast<int32_t>(delta);  // Relocate entry.
       if (flush_icache) CpuFeatures::FlushICache(p, sizeof(uint32_t));
     }
@@ -274,9 +276,10 @@ int RelocInfo::target_address_size() {
 
 void RelocInfo::set_target_address(Address target,
                                    WriteBarrierMode write_barrier_mode,
-                                   ICacheFlushMode icache_flush_mode) {
+                                   ICacheFlushMode icache_flush_mode,
+                                   ptrdiff_t diff) {
   DCHECK(IsCodeTarget(rmode_) || IsRuntimeEntry(rmode_));
-  Assembler::set_target_address_at(pc_, host_, target, icache_flush_mode);
+  Assembler::set_target_address_at(pc_, host_, target, icache_flush_mode, diff);
   if (write_barrier_mode == UPDATE_WRITE_BARRIER && host() != NULL &&
       IsCodeTarget(rmode_)) {
     Object* target_code = Code::GetCodeFromTargetAddress(target);
@@ -310,11 +313,12 @@ Address RelocInfo::target_reference() {
 
 void RelocInfo::set_target_object(Object* target,
                                   WriteBarrierMode write_barrier_mode,
-                                  ICacheFlushMode icache_flush_mode) {
+                                  ICacheFlushMode icache_flush_mode,
+                                  ptrdiff_t diff) {
   DCHECK(IsCodeTarget(rmode_) || rmode_ == EMBEDDED_OBJECT);
-  Memory::Object_at(pc_) = target;
+  Memory::Object_at(pc_+diff) = target;
   if (icache_flush_mode != SKIP_ICACHE_FLUSH) {
-    CpuFeatures::FlushICache(pc_, sizeof(Address));
+    CpuFeatures::FlushICache(pc_+diff, sizeof(Address));
   }
   if (write_barrier_mode == UPDATE_WRITE_BARRIER &&
       host() != NULL &&
@@ -333,10 +337,11 @@ Address RelocInfo::target_runtime_entry(Assembler* origin) {
 
 void RelocInfo::set_target_runtime_entry(Address target,
                                          WriteBarrierMode write_barrier_mode,
-                                         ICacheFlushMode icache_flush_mode) {
+                                         ICacheFlushMode icache_flush_mode,
+                                         ptrdiff_t diff) {
   DCHECK(IsRuntimeEntry(rmode_));
   if (target_address() != target) {
-    set_target_address(target, write_barrier_mode, icache_flush_mode);
+    set_target_address(target, write_barrier_mode, icache_flush_mode, diff);
   }
 }
 
@@ -356,12 +361,13 @@ Cell* RelocInfo::target_cell() {
 
 void RelocInfo::set_target_cell(Cell* cell,
                                 WriteBarrierMode write_barrier_mode,
-                                ICacheFlushMode icache_flush_mode) {
+                                ICacheFlushMode icache_flush_mode,
+                                ptrdiff_t diff) {
   DCHECK(rmode_ == RelocInfo::CELL);
   Address address = cell->address() + Cell::kValueOffset;
-  Memory::Address_at(pc_) = address;
+  Memory::Address_at(pc_+diff) = address;
   if (icache_flush_mode != SKIP_ICACHE_FLUSH) {
-    CpuFeatures::FlushICache(pc_, sizeof(Address));
+    CpuFeatures::FlushICache(pc_+diff, sizeof(Address));
   }
   if (write_barrier_mode == UPDATE_WRITE_BARRIER &&
       host() != NULL) {
@@ -418,11 +424,12 @@ Code* RelocInfo::code_age_stub() {
 
 
 void RelocInfo::set_code_age_stub(Code* stub,
-                                  ICacheFlushMode icache_flush_mode) {
+                                  ICacheFlushMode icache_flush_mode,
+                                  ptrdiff_t diff) {
   DCHECK(*pc_ == kCallOpcode);
   DCHECK(rmode_ == RelocInfo::CODE_AGE_SEQUENCE);
   Assembler::set_target_address_at(pc_ + 1, host_, stub->instruction_start(),
-                                   icache_flush_mode);
+                                   icache_flush_mode, diff);
 }
 
 

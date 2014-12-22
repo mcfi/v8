@@ -896,11 +896,23 @@ class CodeRange {
   bool UncommitRawMemory(Address start, size_t length);
   void FreeRawMemory(Address buf, size_t length);
 
+  inline ptrdiff_t Offset() {
+    return (Address)shadow_code_ - (Address)code_range_->address();
+  }
+
+  bool InCodeRange(const Address addr, const size_t size) {
+    return (NULL != shadow_code_) &&
+      (addr >= (Address)code_range_->address()) &&
+      (addr + size) <= (Address)code_range_->address() + code_range_->size();
+  }
  private:
   Isolate* isolate_;
 
   // The reserved range of virtual memory that all code objects are put in.
   base::VirtualMemory* code_range_;
+
+  // Shadow code heap
+  void* shadow_code_;
   // Plain old data class, just a struct plus a constructor.
   class FreeBlock {
    public:

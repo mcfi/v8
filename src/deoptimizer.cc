@@ -2813,7 +2813,7 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   CHECK(static_cast<int>(Deoptimizer::GetMaxDeoptTableSize()) >=
         desc.instr_size);
   chunk->CommitArea(desc.instr_size);
-  CopyBytes(chunk->area_start(), desc.buffer,
+  CopyBytes(chunk->area_start() + isolate->code_range()->Offset(), desc.buffer,
       static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
