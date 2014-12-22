@@ -2633,7 +2633,11 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movl(rax, Immediate(true_offset));
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
-    __ movb(Operand(kScratchRegister, kOffsetToResultValue), rax);
+    __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
+    __ movq(kScratchRegister, masm->isolate()->code_range()->Offset());
+    __ addq(kSmiConstantRegister, kScratchRegister);
+    __ movb(Operand(kSmiConstantRegister, 0), rax);
+    __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
       __ cmpl(Operand(kScratchRegister, kOffsetToResultValue - 4), rax);
@@ -2662,7 +2666,11 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movl(rax, Immediate(false_offset));
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
-    __ movb(Operand(kScratchRegister, kOffsetToResultValue), rax);
+    __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
+    __ movq(kScratchRegister, masm->isolate()->code_range()->Offset());
+    __ addq(kSmiConstantRegister, kScratchRegister);
+    __ movb(Operand(kSmiConstantRegister, 0), rax);
+    __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
       __ cmpl(Operand(kScratchRegister, kOffsetToResultValue - 4), rax);

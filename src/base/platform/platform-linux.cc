@@ -430,7 +430,7 @@ void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
 
     close(code_heap_fd);
     shm_unlink("codeheap");
-    fprintf(stderr, "%p, %p", result, *shadow_code_heap);
+    //fprintf(stderr, "%p, %p\n", result, *shadow_code_heap);
     return result;
   }
 }

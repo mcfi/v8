@@ -10098,9 +10098,13 @@ void Code::InvalidateEmbeddedObjects() {
   for (RelocIterator it(this, mode_mask); !it.done(); it.next()) {
     RelocInfo::Mode mode = it.rinfo()->rmode();
     if (mode == RelocInfo::EMBEDDED_OBJECT) {
-      it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER);
+      it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER,
+                                    SKIP_ICACHE_FLUSH,
+                                    this->GetIsolate()->code_range()->Offset());
     } else if (mode == RelocInfo::CELL) {
-      it.rinfo()->set_target_cell(undefined_cell, SKIP_WRITE_BARRIER);
+      it.rinfo()->set_target_cell(undefined_cell, SKIP_WRITE_BARRIER,
+                                  SKIP_ICACHE_FLUSH,
+                                  this->GetIsolate()->code_range()->Offset());
     }
   }
 }
