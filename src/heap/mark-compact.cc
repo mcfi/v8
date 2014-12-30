@@ -2886,6 +2886,7 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
                                          int size, AllocationSpace dest) {
   Address dst_addr = dst->address();
   Address src_addr = src->address();
+  ptrdiff_t diff = 0;
   DCHECK(heap()->AllowedToBeMigrated(src, dest));
   DCHECK(dest != LO_SPACE && size <= Page::kMaxRegularHeapObjectSize);
   if (dest == OLD_POINTER_SPACE) {
@@ -2893,10 +2894,13 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     Address dst_slot = dst_addr;
     DCHECK(IsAligned(size, kPointerSize));
 
+    diff = 0;
+    if (heap()->isolate()->code_range()->InCodeRange(dst_slot, size))
+      diff = heap()->isolate()->code_range()->Offset();
     for (int remaining = size / kPointerSize; remaining > 0; remaining--) {
       Object* value = Memory::Object_at(src_slot);
 
-      Memory::Object_at(dst_slot) = value;
+      Memory::Object_at(dst_slot+diff) = value;
 
       if (!src->MayContainRawValues()) {
         RecordMigratedSlot(value, dst_slot);
@@ -2942,7 +2946,10 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     }
   } else if (dest == CODE_SPACE) {
     PROFILE(isolate(), CodeMoveEvent(src_addr, dst_addr));
-    heap()->MoveBlock(dst_addr, src_addr, size);
+    diff = 0;
+    if (heap()->isolate()->code_range()->InCodeRange(dst_addr, size))
+      diff = heap()->isolate()->code_range()->Offset();
+    heap()->MoveBlock(dst_addr+diff, src_addr, size);
     SlotsBuffer::AddTo(&slots_buffer_allocator_, &migration_slots_buffer_,
                        SlotsBuffer::RELOCATED_CODE_OBJECT, dst_addr,
                        SlotsBuffer::IGNORE_OVERFLOW);
@@ -2952,7 +2959,10 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     heap()->MoveBlock(dst_addr, src_addr, size);
   }
   heap()->OnMoveEvent(dst, src, size);
-  Memory::Address_at(src_addr) = dst_addr;
+  diff = 0;
+  if (heap()->isolate()->code_range()->InCodeRange(src_addr, size))
+    diff = heap()->isolate()->code_range()->Offset();
+  Memory::Address_at(src_addr+diff) = dst_addr;
 }
 
 
