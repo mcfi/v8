@@ -230,9 +230,9 @@ static void InitCoverageLog();
 
 Assembler::Assembler(Isolate* isolate, void* buffer, int buffer_size, ptrdiff_t diff)
     : AssemblerBase(isolate, buffer, buffer_size),
+      diff_(diff),
       code_targets_(100),
-      positions_recorder_(this),
-      diff_(diff){
+      positions_recorder_(this) {
   // Clear the buffer in debug mode unless it was provided by the
   // caller in which case we can't be sure it's okay to overwrite
   // existing code in it.

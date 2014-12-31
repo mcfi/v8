@@ -1,3 +1,19 @@
+2014-12-30: Version 3.29.88
+
+        Code heap allocation changed to allocate two equal-sized
+        regions, one for execution and the other for modification.
+        All code heap modification is redirected to the writable
+        code heap, including the followings:
+
+        Code installation.
+          JIT code might also change itself, such in InstanceofStub.
+
+        Optimization and Deoptimization.
+
+        Garbage collection and heap compaction.
+
+        Inlined caching.
+
 2014-09-25: Version 3.29.88
 
         Performance and stability improvements on all platforms.
