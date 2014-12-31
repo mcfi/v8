@@ -112,7 +112,14 @@ PropertyDetails PropertyDetails::AsDeleted() const {
     return Smi::cast(value)->value();                   \
   }                                                     \
   void holder::set_##name(int value) {                  \
-    WRITE_FIELD(this, offset, Smi::FromInt(value));     \
+    if (std::is_same<holder, FreeSpace>()) {                            \
+      ptrdiff_t diff = 0;                                               \
+      if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(int))) { \
+        diff = this->GetIsolate()->code_range()->Offset();              \
+      }                                                                 \
+      NOBARRIER_WRITE_FIELD(this + diff, offset, Smi::FromInt(value));  \
+    } else                                                              \
+      WRITE_FIELD(this, offset, Smi::FromInt(value));                   \
   }
 
 #define SYNCHRONIZED_SMI_ACCESSORS(holder, name, offset)    \
@@ -1464,7 +1471,7 @@ void HeapObject::set_map_word(MapWord map_word) {
   ptrdiff_t diff = 0;
   if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
     diff = this->GetIsolate()->code_range()->Offset();
-  }  
+  }
   NOBARRIER_WRITE_FIELD(
       (Address)this+diff, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
 }

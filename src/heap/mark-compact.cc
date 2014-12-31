@@ -2986,7 +2986,9 @@ class PointersUpdatingVisitor : public ObjectVisitor {
     // Avoid unnecessary changes that might unnecessary flush the instruction
     // cache.
     if (target != old_target) {
-      rinfo->set_target_object(target);
+      rinfo->set_target_object(target, SKIP_WRITE_BARRIER,
+                               SKIP_ICACHE_FLUSH,
+                               heap_->isolate()->code_range()->Offset());
     }
   }
 
@@ -2996,7 +2998,10 @@ class PointersUpdatingVisitor : public ObjectVisitor {
     Object* old_target = target;
     VisitPointer(&target);
     if (target != old_target) {
-      rinfo->set_target_address(Code::cast(target)->instruction_start());
+      rinfo->set_target_address(Code::cast(target)->instruction_start(),
+                                SKIP_WRITE_BARRIER,
+                                SKIP_ICACHE_FLUSH,
+                                Code::cast(target)->GetIsolate()->code_range()->Offset());
     }
   }
 
@@ -3006,7 +3011,9 @@ class PointersUpdatingVisitor : public ObjectVisitor {
     DCHECK(stub != NULL);
     VisitPointer(&stub);
     if (stub != rinfo->code_age_stub()) {
-      rinfo->set_code_age_stub(Code::cast(stub));
+      rinfo->set_code_age_stub(Code::cast(stub),
+                               SKIP_ICACHE_FLUSH,
+                               Code::cast(stub)->GetIsolate()->code_range()->Offset());
     }
   }
 
@@ -3032,7 +3039,11 @@ class PointersUpdatingVisitor : public ObjectVisitor {
       DCHECK(heap->InFromSpace(heap_obj) ||
              MarkCompactCollector::IsOnEvacuationCandidate(heap_obj));
       HeapObject* target = map_word.ToForwardingAddress();
-      *slot = target;
+      ptrdiff_t diff = 0;
+      if (heap->isolate()->code_range()->InCodeRange((Address)slot, kPointerSize)){
+        diff = heap->isolate()->code_range()->Offset();
+      }
+      *(Object**)((Address)slot+diff) = target;
       DCHECK(!heap->InFromSpace(target) &&
              !MarkCompactCollector::IsOnEvacuationCandidate(target));
     }
