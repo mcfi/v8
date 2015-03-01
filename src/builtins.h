@@ -290,6 +290,7 @@ class Builtins {
   const char* names_[builtin_count];
   static const char* const javascript_names_[id_count];
   static int const javascript_argc_[id_count];
+  static int three_arg_generator_count;
 
   static void Generate_Adaptor(MacroAssembler* masm,
                                CFunctionId id,

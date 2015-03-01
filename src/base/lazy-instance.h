@@ -174,12 +174,16 @@ struct LazyInstanceImpl {
     AllocationTrait::template InitStorageUsingTrait<CreateTrait>(storage);
   }
 
+  static void __InitInstance(void *storage) {
+    InitInstance(reinterpret_cast<StorageType*>(storage)); // NOLINT
+  }
+  
   void Init() const {
     InitOnceTrait::Init(
         &once_,
         // Casts to void* are needed here to avoid breaking strict aliasing
         // rules.
-        reinterpret_cast<void(*)(void*)>(&InitInstance),  // NOLINT
+        reinterpret_cast<void(*)(void*)>(&__InitInstance),  // NOLINT
         reinterpret_cast<void*>(&storage_));
   }
 

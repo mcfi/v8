@@ -1475,6 +1475,8 @@ class BuiltinFunctionTable {
 static BuiltinFunctionTable builtin_function_table =
     BUILTIN_FUNCTION_TABLE_INIT;
 
+int Builtins::three_arg_generator_count = 0;
+
 // Define array of pointers to generators and C builtin functions.
 // We do this in a sort of roundabout way so that we can do the initialization
 // within the lexical scope of Builtins:: and within a context where
@@ -1495,7 +1497,8 @@ void Builtins::InitBuiltinFunctionTable() {
     functions->name = c_##aname;                                       \
     functions->flags = Code::ComputeFlags(Code::BUILTIN);              \
     functions->extra_args = aextra_args;                               \
-    ++functions;
+    ++functions;                                                       \
+    ++three_arg_generator_count;
 
 #define DEF_FUNCTION_PTR_A(aname, kind, state, extra)                       \
     functions->generator = FUNCTION_ADDR(Generate_##aname);                 \
@@ -1517,7 +1520,11 @@ void Builtins::InitBuiltinFunctionTable() {
     functions->extra_args = NO_EXTRA_ARGUMENTS;                             \
     ++functions;
 
+  // The following registers Generate_Adaptor as a generator, which
+  // take three arguments.
   BUILTIN_LIST_C(DEF_FUNCTION_PTR_C)
+  // The following registers Generate_## as a generator, which only
+  // take one argument.
   BUILTIN_LIST_A(DEF_FUNCTION_PTR_A)
   BUILTIN_LIST_H(DEF_FUNCTION_PTR_H)
   BUILTIN_LIST_DEBUG_A(DEF_FUNCTION_PTR_A)
@@ -1551,14 +1558,21 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
   for (int i = 0; i < builtin_count; i++) {
     if (create_heap_objects) {
       MacroAssembler masm(isolate, u.buffer, sizeof u.buffer);
-      // Generate the code/adaptor.
-      typedef void (*Generator)(MacroAssembler*, int, BuiltinExtraArguments);
-      Generator g = FUNCTION_CAST<Generator>(functions[i].generator);
       // We pass all arguments to the generator, but it may not use all of
       // them.  This works because the first arguments are on top of the
       // stack.
       DCHECK(!masm.has_frame());
-      g(&masm, functions[i].name, functions[i].extra_args);
+      // Generate the code/adaptor.
+      if (i < three_arg_generator_count) {
+        typedef void (*ThreeArgGenerator)(MacroAssembler*, int, BuiltinExtraArguments);
+        ThreeArgGenerator g = FUNCTION_CAST<ThreeArgGenerator>(functions[i].generator);
+        g(&masm, functions[i].name, functions[i].extra_args);
+      } else {
+        typedef void (*OneArgGenerator)(MacroAssembler*);
+        OneArgGenerator g = FUNCTION_CAST<OneArgGenerator>(functions[i].generator);
+        g(&masm);
+      }
+
       // Move the code into the object heap.
       CodeDesc desc;
       masm.GetCode(&desc);
