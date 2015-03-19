@@ -1178,6 +1178,8 @@ void Assembler::load_rax(ExternalReference ref) {
 void Assembler::leave() {
   EnsureSpace ensure_space(this);
   emit(0xC9);
+  // clear the upper 32-bits for rsp by movl %esp, %esp
+  emit(0x89);emit(0xe4);
 }
 
 
