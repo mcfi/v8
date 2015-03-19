@@ -338,7 +338,7 @@ void FullCodeGenerator::EmitProfilingCounterReset() {
 }
 
 
-static const byte kJnsOffset = kPointerSize == kInt64Size ? 0x1d : 0x14;
+static const byte kJnsOffset = kPointerSize == kInt64Size ? 0x1e : 0x15;
 
 
 void FullCodeGenerator::EmitBackEdgeBookkeeping(IterationStatement* stmt,

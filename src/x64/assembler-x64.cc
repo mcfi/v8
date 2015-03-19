@@ -1285,10 +1285,10 @@ void Assembler::emit_mov(Register dst, Register src, int size) {
   }
 }
 
-  // TODO: figure out why adding 0x67 crashes v8
+
 void Assembler::emit_mov(const Operand& dst, Register src, int size) {
   EnsureSpace ensure_space(this);
-  //emit(0x67);
+  emit(0x67);
   emit_rex(src, dst, size);
   emit(0x89);
   emit_operand(src, dst);
