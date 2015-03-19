@@ -1340,6 +1340,10 @@ class Assembler : public AssemblerBase {
                      Register reg,
                      const Operand& rm_reg,
                      int size);
+  void arithmetic_op(byte opcode,
+                     const Operand& rm_reg,
+                     Register reg,
+                     int size);
   // Operate on a byte in memory or register.
   void immediate_arithmetic_op_8(byte subcode,
                                  Register dst,
@@ -1392,7 +1396,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_add(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x1, src, dst, size);
+    arithmetic_op(0x1, dst, src, size);
   }
 
   void emit_add(const Operand& dst, Immediate src, int size) {
@@ -1408,7 +1412,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_and(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x21, src, dst, size);
+    arithmetic_op(0x21, dst, src, size);
   }
 
   void emit_and(Register dst, Immediate src, int size) {
@@ -1486,7 +1490,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_or(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x9, src, dst, size);
+    arithmetic_op(0x9, dst, src, size);
   }
 
   void emit_or(Register dst, Immediate src, int size) {
@@ -1516,7 +1520,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_sub(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x29, src, dst, size);
+    arithmetic_op(0x29, dst, src, size);
   }
 
   void emit_sub(const Operand& dst, Immediate src, int size) {
@@ -1557,7 +1561,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_xor(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x31, src, dst, size);
+    arithmetic_op(0x31, dst, src, size);
   }
 
   friend class CodePatcher;
