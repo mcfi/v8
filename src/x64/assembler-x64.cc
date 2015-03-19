@@ -1144,6 +1144,8 @@ void Assembler::jmp(const Operand& src) {
 
 void Assembler::emit_lea(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
+  if (dst.is(rsp))
+    size = kInt32Size;
   emit_rex(dst, src, size);
   emit(0x8D);
   emit_operand(dst, src);
@@ -1260,6 +1262,8 @@ void Assembler::movw(const Operand& dst, Immediate imm) {
 
 void Assembler::emit_mov(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
+  if (dst.is(rsp))
+    size = kInt32Size;
   emit_rex(dst, src, size);
   emit(0x8B);
   emit_operand(dst, src);
@@ -1268,6 +1272,8 @@ void Assembler::emit_mov(Register dst, const Operand& src, int size) {
 
 void Assembler::emit_mov(Register dst, Register src, int size) {
   EnsureSpace ensure_space(this);
+  if (dst.is(rsp))
+    size = kInt32Size;
   if (src.low_bits() == 4) {
     emit_rex(src, dst, size);
     emit(0x89);

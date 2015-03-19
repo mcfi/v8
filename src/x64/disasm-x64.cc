@@ -1383,6 +1383,8 @@ int DisassemblerX64::InstructionDecode(v8::internal::Vector<char> out_buffer,
       if (rex_w()) AppendToBuffer("REX.W ");
     } else if ((current & 0xFE) == 0xF2) {  // Group 1 prefix (0xF2 or 0xF3).
       group_1_prefix_ = current;
+    } else if (current == 0x67) {
+      AppendToBuffer("SBX ");
     } else {  // Not a prefix - an opcode.
       break;
     }

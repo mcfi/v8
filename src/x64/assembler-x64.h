@@ -1384,10 +1384,14 @@ class Assembler : public AssemblerBase {
 
   // Arithmetics
   void emit_add(Register dst, Register src, int size) {
+    if (dst.is(rsp))
+      size = kInt32Size;
     arithmetic_op(0x03, dst, src, size);
   }
 
   void emit_add(Register dst, Immediate src, int size) {
+    if (dst.is(rsp))
+      size = kInt32Size;
     immediate_arithmetic_op(0x0, dst, src, size);
   }
 
@@ -1404,6 +1408,10 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_and(Register dst, Register src, int size) {
+    // when dst == rsp && size == kInt64Size, we need to
+    // use 32-bit version to sandbox rsp
+    if (dst.is(rsp))
+      size = kInt32Size;
     arithmetic_op(0x23, dst, src, size);
   }
 
@@ -1416,6 +1424,8 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_and(Register dst, Immediate src, int size) {
+    if (dst.is(rsp))
+      size = kInt32Size;
     immediate_arithmetic_op(0x4, dst, src, size);
   }
 
@@ -1508,10 +1518,14 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_sub(Register dst, Register src, int size) {
+    if (dst.is(rsp))
+      size = kInt32Size;
     arithmetic_op(0x2B, dst, src, size);
   }
 
   void emit_sub(Register dst, Immediate src, int size) {
+    if (dst.is(rsp))
+      size = kInt32Size;
     immediate_arithmetic_op(0x5, dst, src, size);
   }
 
