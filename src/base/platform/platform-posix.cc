@@ -495,6 +495,7 @@ static void SetThreadName(const char* name) {
 }
 
 
+__attribute__((threadentry))
 static void* ThreadEntry(void* arg) {
   Thread* thread = reinterpret_cast<Thread*>(arg);
   // We take the lock here to make sure that pthread_create finished first since
