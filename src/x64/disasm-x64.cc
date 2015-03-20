@@ -1385,6 +1385,8 @@ int DisassemblerX64::InstructionDecode(v8::internal::Vector<char> out_buffer,
       group_1_prefix_ = current;
     } else if (current == 0x67) {
       AppendToBuffer("SBX ");
+    } else if (current == 0x65) {
+      AppendToBuffer("MCFI ");
     } else {  // Not a prefix - an opcode.
       break;
     }

@@ -1127,6 +1127,14 @@ void Assembler::jmp(Address entry, RelocInfo::Mode rmode) {
 void Assembler::jmp(Register target) {
   EnsureSpace ensure_space(this);
   // Opcode FF/4 r64.
+  // sandboxing: movl target, target
+  movl(target, target);
+  // cmpb $0xf4, %gs:(target)
+  emit(0x65);
+  cmpb(Operand(target, 0), Immediate(0)); // TODO, replace 0 with 0xf4
+  // jne -3
+  emit(0x75);emit(0xfd);
+  // jmp target
   emit_optional_rex_32(target);
   emit(0xFF);
   emit_modrm(0x4, target);
@@ -1135,10 +1143,8 @@ void Assembler::jmp(Register target) {
 
 void Assembler::jmp(const Operand& src) {
   EnsureSpace ensure_space(this);
-  // Opcode FF/4 m64.
-  emit_optional_rex_32(src);
-  emit(0xFF);
-  emit_operand(0x4, src);
+  leaq(r10, src);
+  jmp(r10);
 }
 
 
@@ -1687,21 +1693,12 @@ void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));
   // pop return address to r10
-  emit(0x41);emit(0x5a);
-  // movl %r10d, %r10d
-  emit(0x45);emit(0x89);emit(0xd2);
+  popq(r10);
   // if imm16 != 0, addl $imm16, %esp
-  if (imm16 != 0) {
-    emit(0x81);emit(0xc4);
-    emit(imm16 & 0xFF);emit((imm16 >> 8) & 0xFF);
-    emit(0);emit(0);
-  }
-  // cmpb $0xf4, %gs:(%r10)
-  emit(0x65);emit(0x41);emit(0x80);emit(0x3a);emit(0x0);//emit(0xf4); TODO
-  // (branch not taken) jne -3 will hit 0xf4 (hlt) in the previous instruction
-  emit(0x2e);emit(0x75);emit(0xfd);
-  // jmp *%r10
-  emit(0x41);emit(0xff);emit(0xe2);
+  if (imm16 != 0)
+    addl(rsp, Immediate(imm16));
+  // jmp r10
+  jmp(r10);
 }
 
 
