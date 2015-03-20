@@ -1143,7 +1143,7 @@ void Assembler::jmp(Register target) {
 
 void Assembler::jmp(const Operand& src) {
   EnsureSpace ensure_space(this);
-  leaq(r10, src);
+  movq(r10, src);
   jmp(r10);
 }
 
