@@ -1686,13 +1686,22 @@ void Assembler::pushfq() {
 void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));
-  if (imm16 == 0) {
-    emit(0xC3);
-  } else {
-    emit(0xC2);
-    emit(imm16 & 0xFF);
-    emit((imm16 >> 8) & 0xFF);
+  // pop return address to r10
+  emit(0x41);emit(0x5a);
+  // movl %r10d, %r10d
+  emit(0x45);emit(0x89);emit(0xd2);
+  // if imm16 != 0, addl $imm16, %esp
+  if (imm16 != 0) {
+    emit(0x81);emit(0xc4);
+    emit(imm16 & 0xFF);emit((imm16 >> 8) & 0xFF);
+    emit(0);emit(0);
   }
+  // cmpb $0xf4, %gs:(%r10)
+  emit(0x65);emit(0x41);emit(0x80);emit(0x3a);emit(0x0);//emit(0xf4); TODO
+  // (branch not taken) jne -3 will hit 0xf4 (hlt) in the previous instruction
+  emit(0x2e);emit(0x75);emit(0xfd);
+  // jmp *%r10
+  emit(0x41);emit(0xff);emit(0xe2);
 }
 
 
