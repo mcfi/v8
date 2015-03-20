@@ -403,22 +403,12 @@ void Assembler::emit_operand(int code, const Operand& adr) {
 // Assembler Instruction implementations.
 
 void Assembler::arithmetic_op(byte opcode,
-                              Register reg,
-                              const Operand& op,
-                              int size) {
-  EnsureSpace ensure_space(this);
-  emit_rex(reg, op, size);
-  emit(opcode);
-  emit_operand(reg, op);
-}
-
-
-void Assembler::arithmetic_op(byte opcode,
                               const Operand& op,
                               Register reg,
-                              int size) {
+                              int size, bool sb) {
   EnsureSpace ensure_space(this);
-  emit(0x67);
+  if (sb)
+    emit(0x67);
   emit_rex(reg, op, size);
   emit(opcode);
   emit_operand(reg, op);
@@ -463,8 +453,11 @@ void Assembler::arithmetic_op_16(byte opcode, Register reg, Register rm_reg) {
 
 void Assembler::arithmetic_op_16(byte opcode,
                                  Register reg,
-                                 const Operand& rm_reg) {
+                                 const Operand& rm_reg,
+                                 bool sb) {
   EnsureSpace ensure_space(this);
+  if (sb)
+    emit(0x67);
   emit(0x66);
   emit_optional_rex_32(reg, rm_reg);
   emit(opcode);
@@ -472,8 +465,11 @@ void Assembler::arithmetic_op_16(byte opcode,
 }
 
 
-void Assembler::arithmetic_op_8(byte opcode, Register reg, const Operand& op) {
+void Assembler::arithmetic_op_8(byte opcode, Register reg, const Operand& op,
+                                bool sb) {
   EnsureSpace ensure_space(this);
+  if (sb)
+    emit(0x67);
   if (!reg.is_byte_register()) {
     // Register is not one of al, bl, cl, dl.  Its encoding needs REX.
     emit_rex_32(reg);
@@ -528,9 +524,10 @@ void Assembler::immediate_arithmetic_op(byte subcode,
 void Assembler::immediate_arithmetic_op(byte subcode,
                                         const Operand& dst,
                                         Immediate src,
-                                        int size) {
+                                        int size, bool sb) {
   EnsureSpace ensure_space(this);
-  emit(0x67);
+  if (sb)
+    emit(0x67);
   emit_rex(dst, size);
   if (is_int8(src.value_)) {
     emit(0x83);
@@ -567,9 +564,10 @@ void Assembler::immediate_arithmetic_op_16(byte subcode,
 
 void Assembler::immediate_arithmetic_op_16(byte subcode,
                                            const Operand& dst,
-                                           Immediate src) {
+                                           Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
-  emit(0x67);
+  if (sb)
+    emit(0x67);
   emit(0x66);  // Operand size override prefix.
   emit_optional_rex_32(dst);
   if (is_int8(src.value_)) {
@@ -586,9 +584,10 @@ void Assembler::immediate_arithmetic_op_16(byte subcode,
 
 void Assembler::immediate_arithmetic_op_8(byte subcode,
                                           const Operand& dst,
-                                          Immediate src) {
+                                          Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
-  emit(0x67);
+  if (sb)
+    emit(0x67);
   emit_optional_rex_32(dst);
   DCHECK(is_int8(src.value_) || is_uint8(src.value_));
   emit(0x80);

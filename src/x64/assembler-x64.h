@@ -568,7 +568,7 @@ class Assembler : public AssemblerBase {
   // and the return address pushed on the stack.
   static const int kCallTargetAddressOffset = 4;  // Use 32-bit displacement.
   // The length of call(kScratchRegister).
-  static const int kCallScratchRegisterInstructionLength = 15;
+  static const int kCallScratchRegisterInstructionLength = 14;
   // The length of call(Immediate32).
   static const int kShortCallInstructionLength = 5;
   // The length of movq(kScratchRegister, address).
@@ -764,19 +764,19 @@ class Assembler : public AssemblerBase {
   }
 
   void cmpb(Register dst, const Operand& src) {
-    arithmetic_op_8(0x3A, dst, src);
+    arithmetic_op_8(0x3A, dst, src, false);
   }
 
   void cmpb(const Operand& dst, Register src) {
-    arithmetic_op_8(0x38, src, dst);
+    arithmetic_op_8(0x38, src, dst, false);
   }
 
   void cmpb(const Operand& dst, Immediate src) {
-    immediate_arithmetic_op_8(0x7, dst, src);
+    immediate_arithmetic_op_8(0x7, dst, src, false);
   }
 
   void cmpw(const Operand& dst, Immediate src) {
-    immediate_arithmetic_op_16(0x7, dst, src);
+    immediate_arithmetic_op_16(0x7, dst, src, false);
   }
 
   void cmpw(Register dst, Immediate src) {
@@ -784,7 +784,7 @@ class Assembler : public AssemblerBase {
   }
 
   void cmpw(Register dst, const Operand& src) {
-    arithmetic_op_16(0x3B, dst, src);
+    arithmetic_op_16(0x3B, dst, src, false);
   }
 
   void cmpw(Register dst, Register src) {
@@ -792,7 +792,7 @@ class Assembler : public AssemblerBase {
   }
 
   void cmpw(const Operand& dst, Register src) {
-    arithmetic_op_16(0x39, src, dst);
+    arithmetic_op_16(0x39, src, dst, false);
   }
 
   void andb(Register dst, Immediate src) {
@@ -1333,33 +1333,31 @@ class Assembler : public AssemblerBase {
   // similar, differing just in the opcode or in the reg field of the
   // ModR/M byte.
   void arithmetic_op_8(byte opcode, Register reg, Register rm_reg);
-  void arithmetic_op_8(byte opcode, Register reg, const Operand& rm_reg);
+  void arithmetic_op_8(byte opcode, Register reg, const Operand& rm_reg, bool sb = true);
   void arithmetic_op_16(byte opcode, Register reg, Register rm_reg);
-  void arithmetic_op_16(byte opcode, Register reg, const Operand& rm_reg);
+  void arithmetic_op_16(byte opcode, Register reg, const Operand& rm_reg, bool sb = true);
   // Operate on operands/registers with pointer size, 32-bit or 64-bit size.
   void arithmetic_op(byte opcode, Register reg, Register rm_reg, int size);
   void arithmetic_op(byte opcode,
-                     Register reg,
-                     const Operand& rm_reg,
-                     int size);
-  void arithmetic_op(byte opcode,
                      const Operand& rm_reg,
                      Register reg,
-                     int size);
+                     int size, bool sb = true);
   // Operate on a byte in memory or register.
   void immediate_arithmetic_op_8(byte subcode,
                                  Register dst,
                                  Immediate src);
   void immediate_arithmetic_op_8(byte subcode,
                                  const Operand& dst,
-                                 Immediate src);
+                                 Immediate src,
+                                 bool sb = true);
   // Operate on a word in memory or register.
   void immediate_arithmetic_op_16(byte subcode,
                                   Register dst,
                                   Immediate src);
   void immediate_arithmetic_op_16(byte subcode,
                                   const Operand& dst,
-                                  Immediate src);
+                                  Immediate src,
+                                  bool sb = true);
   // Operate on operands/registers with pointer size, 32-bit or 64-bit size.
   void immediate_arithmetic_op(byte subcode,
                                Register dst,
@@ -1368,7 +1366,8 @@ class Assembler : public AssemblerBase {
   void immediate_arithmetic_op(byte subcode,
                                const Operand& dst,
                                Immediate src,
-                               int size);
+                               int size,
+                               bool sb = true);
 
   // Emit machine code for a shift operation.
   void shift(Register dst, Immediate shift_amount, int subcode, int size);
@@ -1398,7 +1397,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_add(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x03, dst, src, size);
+    arithmetic_op(0x03, src, dst, size, false);
   }
 
   void emit_add(const Operand& dst, Register src, int size) {
@@ -1418,7 +1417,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_and(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x23, dst, src, size);
+    arithmetic_op(0x23, src, dst, size, false);
   }
 
   void emit_and(const Operand& dst, Register src, int size) {
@@ -1440,11 +1439,11 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_cmp(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x3B, dst, src, size);
+    arithmetic_op(0x3B, src, dst, size, false);
   }
 
   void emit_cmp(const Operand& dst, Register src, int size) {
-    arithmetic_op(0x39, src, dst, size);
+    arithmetic_op(0x39, dst, src, size, false);
   }
 
   void emit_cmp(Register dst, Immediate src, int size) {
@@ -1452,7 +1451,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_cmp(const Operand& dst, Immediate src, int size) {
-    immediate_arithmetic_op(0x7, dst, src, size);
+    immediate_arithmetic_op(0x7, dst, src, size, false);
   }
 
   void emit_dec(Register dst, int size);
@@ -1498,7 +1497,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_or(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x0B, dst, src, size);
+    arithmetic_op(0x0B, src, dst, size, false);
   }
 
   void emit_or(const Operand& dst, Register src, int size) {
@@ -1532,7 +1531,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_sub(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x2B, dst, src, size);
+    arithmetic_op(0x2B, src, dst, size, false);
   }
 
   void emit_sub(const Operand& dst, Register src, int size) {
@@ -1565,7 +1564,7 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_xor(Register dst, const Operand& src, int size) {
-    arithmetic_op(0x33, dst, src, size);
+    arithmetic_op(0x33, src, dst, size, false);
   }
 
   void emit_xor(Register dst, Immediate src, int size) {
