@@ -568,7 +568,7 @@ class Assembler : public AssemblerBase {
   // and the return address pushed on the stack.
   static const int kCallTargetAddressOffset = 4;  // Use 32-bit displacement.
   // The length of call(kScratchRegister).
-  static const int kCallScratchRegisterInstructionLength = 3;
+  static const int kCallScratchRegisterInstructionLength = 15;
   // The length of call(Immediate32).
   static const int kShortCallInstructionLength = 5;
   // The length of movq(kScratchRegister, address).
@@ -903,6 +903,8 @@ class Assembler : public AssemblerBase {
 
   // Call near absolute indirect, address in register
   void call(Register adr);
+
+  void call_native(Register adr);
 
   // Jumps
   // Jump short or near relative.

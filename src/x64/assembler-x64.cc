@@ -392,10 +392,10 @@ void Assembler::emit_operand(int code, const Operand& adr) {
 
   // Emit updated ModR/M byte containing the given register.
   DCHECK((adr.buf_[0] & 0x38) == 0);
-  pc_[0] = adr.buf_[0] | code << 3;
+  (pc_ + diff_)[0] = adr.buf_[0] | code << 3;
 
   // Emit the rest of the encoded operand.
-  for (unsigned i = 1; i < length; i++) pc_[i] = adr.buf_[i];
+  for (unsigned i = 1; i < length; i++) (pc_ + diff_)[i] = adr.buf_[i];
   pc_ += length;
 }
 
@@ -708,8 +708,7 @@ void Assembler::call(Handle<Code> target,
   emit_code_target(target, rmode, ast_id);
 }
 
-
-void Assembler::call(Register adr) {
+void Assembler::call_native(Register adr) {
   positions_recorder()->WriteRecordedPositions();
   EnsureSpace ensure_space(this);
   // Opcode: FF /2 r64.
@@ -719,13 +718,25 @@ void Assembler::call(Register adr) {
 }
 
 
+void Assembler::call(Register adr) {
+  EnsureSpace ensure_space(this);
+  // sandbox adr
+  movl(adr, adr);
+  // cmpb 0xf4, %gs:(adr)
+  emit(0x65);
+  cmpb(Operand(adr, 0), Immediate(0));//TODO: replace 0 with 0xf4
+  // jne -3
+  emit(0x2e);emit(0x75);emit(0xfd);
+  // Actual call adr
+  call_native(adr);
+}
+
+
 void Assembler::call(const Operand& op) {
   positions_recorder()->WriteRecordedPositions();
   EnsureSpace ensure_space(this);
-  // Opcode: FF /2 m64.
-  emit_optional_rex_32(op);
-  emit(0xFF);
-  emit_operand(0x2, op);
+  movq(r10, op);
+  call(r10);
 }
 
 
@@ -1133,7 +1144,7 @@ void Assembler::jmp(Register target) {
   emit(0x65);
   cmpb(Operand(target, 0), Immediate(0)); // TODO, replace 0 with 0xf4
   // jne -3
-  emit(0x75);emit(0xfd);
+  emit(0x2e);emit(0x75);emit(0xfd);
   // jmp target
   emit_optional_rex_32(target);
   emit(0xFF);

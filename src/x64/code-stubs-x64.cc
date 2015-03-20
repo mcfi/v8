@@ -2254,7 +2254,7 @@ void CEntryStub::Generate(MacroAssembler* masm) {
   __ movp(rsi, r15);  // argv.
   __ Move(rdx, ExternalReference::isolate_address(isolate()));
 #endif  // _WIN64
-  __ call(rbx);
+  __ call_native(rbx);
   // Result is in rax - do not destroy this register!
 
 #ifdef _WIN64
@@ -2302,7 +2302,7 @@ void CEntryStub::Generate(MacroAssembler* masm) {
 
   // Exit the JavaScript to C++ exit frame.
   __ LeaveExitFrame(save_doubles());
-  __ ret(0);
+  __ ret(0); // TODO: MCFI
 
   // Handling of exception.
   __ bind(&exception_returned);
@@ -2491,7 +2491,7 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
 
   // Restore frame pointer and return.
   __ popq(rbp);
-  __ ret(0);
+  __ ret(0); // TODO: replace this return with instrumented one.
 }
 
 

@@ -770,8 +770,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
 
   bind(&end_profiler_check);
 
-  // Call the api function!
-  call(rax);
+  // Call the api function! TODO: replace with an instrumented version.
+  call_native(rax);
 
   if (FLAG_log_timer_events) {
     FrameScope frame(this, StackFrame::MANUAL);
