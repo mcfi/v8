@@ -717,6 +717,45 @@ void Assembler::call_native(Register adr) {
 }
 
 
+void Assembler::call_mcfi(Register dst, Register bid, Register tid, Label *check) {
+  EnsureSpace ensure_space(this);
+   movl(dst, dst);
+  DCHECK(bid.is(r10) && tid.is(r11));
+  // movq %gs:8, r10
+  emit(0x65);
+  emit(0x4c);emit(0x8b);emit(0x14);emit(0x25);
+  emit(0x08);emit(0x00);emit(0x00);emit(0x00);
+  // cmpq bid, %gs:(dst)
+  emit(0x65);
+  cmpq(Operand(dst, 0), bid);
+  // jne check
+  j(not_equal, check);
+  DCHECK(dst.is(rbx) || dst.is(rax));
+  unsigned long remainder = ((unsigned long)pc_ + 2) % 8;
+  Nop(0 == remainder ? 0 : (8 - remainder));
+  call_native(dst);
+}
+
+
+void Assembler::check(Register dst, Register bid, Register tid, Label *Try) {
+  EnsureSpace ensure_space(this);
+  // movq %gs:(dst), tid
+  emit(0x65);
+  movq(tid, Operand(dst, 0));
+  // testb $0x1, tid
+  testb(tid, Immediate(1));
+  // je hlt
+  Label Hlt;
+  j(equal, &Hlt, Label::kNear);
+  // cmpl bid, tid
+  cmpl(bid, tid);
+  j(not_equal, Try);
+  bind(&Hlt);
+  // hlt
+  hlt();
+}
+
+
 void Assembler::call(Register adr) {
   EnsureSpace ensure_space(this);
   // sandbox adr
@@ -1698,7 +1737,11 @@ void Assembler::pushfq() {
   emit(0x9C);
 }
 
-
+void Assembler::ret(void) {
+  EnsureSpace ensure_space(this);
+  emit(0xc3);
+}
+  
 void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));

@@ -123,6 +123,10 @@ class RecordWriteStub: public PlatformCodeStub {
                  AddressBits::encode(address.code()) |
                  RememberedSetActionBits::encode(remembered_set_action) |
                  SaveFPRegsModeBits::encode(fp_mode);
+    memset(recordwritestub_bary_offset, 0,
+           sizeof(recordwritestub_bary_offset)/sizeof(recordwritestub_bary_offset[0]));
+    memset(rai_recordwritestub, 0,
+           sizeof(rai_recordwritestub)/sizeof(rai_recordwritestub[0]));
   }
 
   RecordWriteStub(uint32_t key, Isolate* isolate)
@@ -185,6 +189,8 @@ class RecordWriteStub: public PlatformCodeStub {
   }
 
   DEFINE_NULL_CALL_INTERFACE_DESCRIPTOR();
+  unsigned int recordwritestub_bary_offset[4];
+  unsigned int rai_recordwritestub[4];
 
  private:
   // This is a helper class for freeing up 3 scratch registers, where the third
@@ -324,9 +330,7 @@ class RecordWriteStub: public PlatformCodeStub {
       Mode mode);
   void InformIncrementalMarker(MacroAssembler* masm);
 
-  void Activate(Code* code) {
-    code->GetHeap()->incremental_marking()->ActivateGeneratedStub(code);
-  }
+  void Activate(Code* code);
 
   Register object() const {
     return Register::from_code(ObjectBits::decode(minor_key_));

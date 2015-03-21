@@ -18,6 +18,10 @@
 #include "src/prototype.h"
 #include "src/vm-state-inl.h"
 
+#include <rock.h>
+
+extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -1593,6 +1597,17 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
         os << "\n";
       }
 #endif
+#define CASE(name) case kMake##name##CodeYoungAgainOddMarking:\
+    case kMake##name##CodeYoungAgainEvenMarking:
+      switch(functions[i].name) {
+        CODE_AGE_LIST(CASE)
+        rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                              "V8CEntryBuiltin", code->instruction_start() + 76);
+        rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                              "V8CEntryBuiltin", code->instruction_start() + 88);
+        break;
+      }
+#undef CASE
     } else {
       // Deserializing. The values will be filled in during IterateBuiltins.
       builtins_[i] = NULL;
@@ -1602,6 +1617,9 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
 
   // Mark as initialized.
   initialized_ = true;
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryBuiltin#N#void!i8*@%\"class.v8::internal::Isolate\"*@", 0);
+  rock_gen_cfg();
 }
 
 

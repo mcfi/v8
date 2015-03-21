@@ -149,17 +149,6 @@ Handle<Code> CodeStub::GetCode() {
     FinishCode(new_object);
     RecordCodeGeneration(new_object);
 
-#ifdef ENABLE_DISASSEMBLER
-    if (FLAG_print_code_stubs) {
-      CodeTracer::Scope trace_scope(isolate()->GetCodeTracer());
-      OFStream os(trace_scope.file());
-      OStringStream name;
-      name << *this;
-      new_object->Disassemble(name.c_str(), os);
-      os << "\n";
-    }
-#endif
-
     if (UseSpecialCache()) {
       AddToSpecialCache(new_object);
     } else {
@@ -175,6 +164,18 @@ Handle<Code> CodeStub::GetCode() {
   }
 
   Activate(code);
+
+#ifdef ENABLE_DISASSEMBLER
+    if (FLAG_print_code_stubs) {
+      CodeTracer::Scope trace_scope(isolate()->GetCodeTracer());
+      OFStream os(trace_scope.file());
+      OStringStream name;
+      name << *this;
+      code->Disassemble(name.c_str(), os);
+      os << "\n";
+    }
+#endif
+
   DCHECK(!NeedsImmovableCode() ||
          heap->lo_space()->Contains(code) ||
          heap->code_space()->FirstPage()->Contains(code->address()));

@@ -12,6 +12,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <rock.h>
 
 // Ubuntu Dapper requires memory pages to be marked as
 // executable. Otherwise, OS raises an exception when executing code
@@ -53,7 +54,7 @@
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #endif
-
+extern "C" void *code_heap = 0;
 namespace v8 {
 namespace base {
 
@@ -430,7 +431,8 @@ void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
 
     close(code_heap_fd);
     shm_unlink("codeheap");
-    //fprintf(stderr, "%p, %p\n", result, *shadow_code_heap);
+    fprintf(stderr, "%p, %p\n", result, *shadow_code_heap);
+    rock_create_code_heap(&code_heap, 0);
     return result;
   }
 }

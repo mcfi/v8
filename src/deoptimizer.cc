@@ -13,6 +13,8 @@
 #include "src/macro-assembler.h"
 #include "src/prettyprinter.h"
 
+#include <rock.h>
+extern "C" void *code_heap;
 
 namespace v8 {
 namespace internal {
@@ -228,12 +230,20 @@ void Deoptimizer::DeleteDebuggerInspectableFrame(DeoptimizedFrameInfo* info,
   isolate->deoptimizer_data()->deoptimized_frame_info_ = NULL;
 }
 
+unsigned Deoptimizer::rai_new_deoptimizer_bary_offset = 0;  
+unsigned Deoptimizer::rai_new_deoptimizer = 0;
+unsigned Deoptimizer::rai_compute_output_frames_bary_offset = 0;
+unsigned Deoptimizer::rai_compute_output_frames = 0;
 
 void Deoptimizer::GenerateDeoptimizationEntries(MacroAssembler* masm,
                                                 int count,
                                                 BailoutType type) {
   TableEntryGenerator generator(masm, type, count);
   generator.Generate();
+  rai_new_deoptimizer_bary_offset = generator.rai_new_deoptimizer_bary_offset;
+  rai_new_deoptimizer = generator.rai_new_deoptimizer;
+  rai_compute_output_frames_bary_offset = generator.rai_compute_output_frames_bary_offset;
+  rai_compute_output_frames = generator.rai_compute_output_frames;
 }
 
 
@@ -2799,7 +2809,7 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   int entry_count = data->deopt_entry_code_entries_[type];
   if (max_entry_id < entry_count) return;
   entry_count = Max(entry_count, Deoptimizer::kMinNumberOfEntries);
-  while (max_entry_id >= entry_count) entry_count *= 2;
+  //while (max_entry_id >= entry_count) entry_count *= 2;
   CHECK(entry_count <= Deoptimizer::kMaxNumberOfEntries);
 
   MacroAssembler masm(isolate, NULL, 16 * KB);
@@ -2813,9 +2823,38 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   CHECK(static_cast<int>(Deoptimizer::GetMaxDeoptTableSize()) >=
         desc.instr_size);
   chunk->CommitArea(desc.instr_size);
+  // TODO: here the deoptimization table entries are dynamically swapped,
+  //       which is essentially a process of dynamic code uninstallation/installation.
   CopyBytes(chunk->area_start() + isolate->code_range()->Offset(), desc.buffer,
       static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                          "V8CEntryNewDeoptimizer#N#%\"class.v8::internal::Deoptimizer\"*!%\"class.v8::internal::JSFunction\"*@i32@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryNewDeoptimizer",
+                        data->deopt_entry_code_[type]->area_start() +
+                        rai_new_deoptimizer_bary_offset
+                        );
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryComputeOutputFrames",
+                        data->deopt_entry_code_[type]->area_start() +
+                        rai_compute_output_frames_bary_offset
+                        );
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryNewDeoptimizer",
+                        data->deopt_entry_code_[type]->area_start() +
+                        rai_new_deoptimizer
+                        );
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryComputeOutputFrames",
+                        data->deopt_entry_code_[type]->area_start() +
+                        rai_compute_output_frames
+                        );
+  // generate the cfg
+  rock_gen_cfg();
 
   data->deopt_entry_code_entries_[type] = entry_count;
 }

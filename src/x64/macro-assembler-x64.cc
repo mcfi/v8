@@ -771,7 +771,10 @@ void MacroAssembler::CallApiFunctionAndReturn(
   bind(&end_profiler_check);
 
   // Call the api function! TODO: replace with an instrumented version.
-  call_native(rax);
+  Label Check;
+  Label Try;
+  bind(&Try);
+  call_mcfi(rax, r10, r11, &Check);
 
   if (FLAG_log_timer_events) {
     FrameScope frame(this, StackFrame::MANUAL);
@@ -859,6 +862,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
   call(rax);
   movp(rax, prev_limit_reg);
   jmp(&leave_exit_frame);
+  bind(&Check);
+  check(rax, r10, r11, &Try);
 }
 
 
@@ -4971,13 +4976,20 @@ void MacroAssembler::CallCFunction(Register function, int num_arguments) {
   if (emit_debug_code()) {
     CheckStackAlignment();
   }
-
-  call(function);
+  Label MCFICheck;
+  Label Try;
+  bind(&Try);
+  call_mcfi(function, r10, r11, &MCFICheck);
   DCHECK(base::OS::ActivationFrameAlignment() != 0);
   DCHECK(num_arguments >= 0);
   int argument_slots_on_stack =
       ArgumentStackSlotsForCFunctionCall(num_arguments);
   movp(rsp, Operand(rsp, argument_slots_on_stack * kRegisterSize));
+  Label cont;
+  jmp(&cont, Label::kNear);
+  bind(&MCFICheck);
+  check(function, r10, r11, &Try);
+  bind(&cont);
 }
 
 

@@ -10,6 +10,10 @@
 #include "src/ic/handler-compiler.h"
 #include "src/ic/ic.h"
 
+#include <rock.h>
+
+extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -665,6 +669,11 @@ void NamedLoadHandlerCompiler::GenerateLoadCallback(
   __ Move(api_function_address, getter_address, RelocInfo::EXTERNAL_REFERENCE);
 
   CallApiGetterStub stub(isolate());
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryCallApiGetterStub", (*stub.GetCode())->instruction_start() + 137);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryCallApiGetterStub", (*stub.GetCode())->instruction_start() + 152);
+  rock_gen_cfg();
   __ TailCallStub(&stub);
 }
 

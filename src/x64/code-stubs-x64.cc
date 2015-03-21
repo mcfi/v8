@@ -16,6 +16,10 @@
 #include "src/regexp-macro-assembler.h"
 #include "src/runtime.h"
 
+#include <rock.h>
+
+extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -2180,6 +2184,10 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
   CreateAllocationSiteStub::GenerateAheadOfTime(isolate);
   BinaryOpICStub::GenerateAheadOfTime(isolate);
   BinaryOpICWithAllocationSiteStub::GenerateAheadOfTime(isolate);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryCallApiGetterStub#N#void!%\"class.v8::Name\"*@%\"class.v8::PropertyCallbackInfo\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryRecordWriteStub#N#void!%\"class.v8::internal::HeapObject\"*@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
 }
 
 
@@ -2190,8 +2198,21 @@ void CodeStub::GenerateFPStubs(Isolate* isolate) {
 void CEntryStub::GenerateAheadOfTime(Isolate* isolate) {
   CEntryStub stub(isolate, 1, kDontSaveFPRegs);
   stub.GetCode();
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryDontSaveFPRegs#N#%\"class.v8::internal::Object\"*!i32@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryDontSaveFPRegs", (*stub.GetCode())->instruction_start() + 96);  
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryDontSaveFPRegs", (*stub.GetCode())->instruction_start() + 77);
   CEntryStub save_doubles(isolate, 1, kSaveFPRegs);
   save_doubles.GetCode();
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntrySaveFPRegs#N#%\"class.v8::internal::Object\"*!i32@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntrySaveFPRegs", (*save_doubles.GetCode())->instruction_start() + 200);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntrySaveFPRegs", (*save_doubles.GetCode())->instruction_start() + 181);
+
 }
 
 
@@ -2254,7 +2275,11 @@ void CEntryStub::Generate(MacroAssembler* masm) {
   __ movp(rsi, r15);  // argv.
   __ Move(rdx, ExternalReference::isolate_address(isolate()));
 #endif  // _WIN64
-  __ call_native(rbx);
+  Label MCFICheck;
+  Label Try;
+  __ bind(&Try);
+  __ call_mcfi(rbx, r10, r11, &MCFICheck);
+  // __ call_native(rbx);
   // Result is in rax - do not destroy this register!
 
 #ifdef _WIN64
@@ -2327,6 +2352,8 @@ void CEntryStub::Generate(MacroAssembler* masm) {
 
   __ bind(&throw_termination_exception);
   __ ThrowUncatchable(rax);
+  __ bind(&MCFICheck);
+  __ check(rbx, r10, r11, &Try);
 }
 
 
@@ -2491,7 +2518,7 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
 
   // Restore frame pointer and return.
   __ popq(rbp);
-  __ ret(0); // TODO: replace this return with instrumented one.
+  __ ret(); // TODO: replace this return with instrumented one.
 }
 
 
@@ -3846,8 +3873,43 @@ void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
     Isolate* isolate) {
   StoreBufferOverflowStub stub1(isolate, kDontSaveFPRegs);
   stub1.GetCode();
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs#N#void!%\"class.v8::internal::Isolate\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs",
+                        (*stub1.GetCode())->instruction_start() + 72);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs",
+                        (*stub1.GetCode())->instruction_start() + 54);
   StoreBufferOverflowStub stub2(isolate, kSaveFPRegs);
   stub2.GetCode();
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryStoreBufferOverflowStubSaveFPRegs#N#void!%\"class.v8::internal::Isolate\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryStoreBufferOverflowStubSaveFPRegs",
+                        (*stub2.GetCode())->instruction_start() + 192);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryStoreBufferOverflowStubSaveFPRegs",
+                        (*stub2.GetCode())->instruction_start() + 179);
+}
+
+void RecordWriteStub::Activate(Code* code) {
+  code->GetHeap()->incremental_marking()->ActivateGeneratedStub(code);
+  fprintf(stderr, "Activated Code: %p\n", code->instruction_start());
+  for (int i = 0; i < 4; i++) {
+    if (rai_recordwritestub[i])
+      rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                            "V8CEntryRecordWriteStub",
+                            code->instruction_start() + rai_recordwritestub[i]);
+  }
+  for (int i = 0; i < 4; i++) {
+    if (recordwritestub_bary_offset[i])
+      rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                            "V8CEntryRecordWriteStub",
+                            code->instruction_start() + recordwritestub_bary_offset[i]);
+  }
+  
+  rock_gen_cfg();
 }
 
 
@@ -3876,7 +3938,10 @@ void RecordWriteStub::Generate(MacroAssembler* masm) {
 
   __ bind(&skip_to_incremental_noncompacting);
   GenerateIncremental(masm, INCREMENTAL);
-
+  recordwritestub_bary_offset[2] = recordwritestub_bary_offset[0];
+  rai_recordwritestub[2] = rai_recordwritestub[0];
+  recordwritestub_bary_offset[3] = recordwritestub_bary_offset[1];
+  rai_recordwritestub[3] = rai_recordwritestub[1];
   __ bind(&skip_to_incremental_compacting);
   GenerateIncremental(masm, INCREMENTAL_COMPACTION);
 
@@ -3909,6 +3974,8 @@ void RecordWriteStub::GenerateIncremental(MacroAssembler* masm, Mode mode) {
     CheckNeedsToInformIncrementalMarker(
         masm, kUpdateRememberedSetOnNoNeedToInformIncrementalMarker, mode);
     InformIncrementalMarker(masm);
+    recordwritestub_bary_offset[1] = recordwritestub_bary_offset[0];
+    rai_recordwritestub[1] = rai_recordwritestub[0];
     regs_.Restore(masm);
     __ RememberedSetHelper(object(), address(), value(), save_fp_regs_mode(),
                            MacroAssembler::kReturnAtEnd);
@@ -3940,9 +4007,11 @@ void RecordWriteStub::InformIncrementalMarker(MacroAssembler* masm) {
 
   AllowExternalCallThatCantCauseGC scope(masm);
   __ PrepareCallCFunction(argument_count);
+  recordwritestub_bary_offset[0] = masm->pc_offset() + 0x12;
   __ CallCFunction(
       ExternalReference::incremental_marking_record_write_function(isolate()),
       argument_count);
+  rai_recordwritestub[0] = masm->pc_offset() - 0x15;
   regs_.RestoreCallerSaveRegisters(masm, save_fp_regs_mode());
 }
 

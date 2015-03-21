@@ -254,6 +254,10 @@ class Deoptimizer : public Malloced {
     virtual ~EntryGenerator() { }
 
     void Generate();
+    unsigned rai_new_deoptimizer_bary_offset;
+    unsigned rai_new_deoptimizer;
+    unsigned rai_compute_output_frames_bary_offset;
+    unsigned rai_compute_output_frames;
 
    protected:
     MacroAssembler* masm() const { return masm_; }
@@ -292,8 +296,8 @@ class Deoptimizer : public Malloced {
   Isolate* isolate() const { return isolate_; }
 
  private:
-  static const int kMinNumberOfEntries = 64;
-  static const int kMaxNumberOfEntries = 16384;
+  static const int kMinNumberOfEntries = 4096;
+  static const int kMaxNumberOfEntries = 4096;
 
   Deoptimizer(Isolate* isolate,
               JSFunction* function,
@@ -410,6 +414,11 @@ class Deoptimizer : public Malloced {
   Address from_;
   int fp_to_sp_delta_;
   int has_alignment_padding_;
+
+  static unsigned rai_new_deoptimizer_bary_offset;
+  static unsigned rai_new_deoptimizer;
+  static unsigned rai_compute_output_frames_bary_offset;
+  static unsigned rai_compute_output_frames;
 
   // Input frame description.
   FrameDescription* input_;

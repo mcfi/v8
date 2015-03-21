@@ -868,6 +868,7 @@ class Assembler : public AssemblerBase {
   void int3();
   void nop();
   void ret(int imm16);
+  void ret(void);
   void setcc(Condition cc, Register reg);
 
   // Label operations & relative jumps (PPUM Appendix D)
@@ -903,9 +904,10 @@ class Assembler : public AssemblerBase {
 
   // Call near absolute indirect, address in register
   void call(Register adr);
-
+  void call_mcfi(Register dst, Register bid, Register tid, Label *check);
   void call_native(Register adr);
-
+  void check(Register dst, Register bid, Register tid, Label *Try);
+  
   // Jumps
   // Jump short or near relative.
   // Use a 32-bit signed displacement.
