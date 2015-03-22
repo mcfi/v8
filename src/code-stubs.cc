@@ -13,6 +13,11 @@
 #include "src/ic/ic.h"
 #include "src/macro-assembler.h"
 
+#include <rock.h>
+#include <vector>
+
+extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -128,6 +133,12 @@ Handle<Code> PlatformCodeStub::GenerateCode() {
       GetStubType());
   Handle<Code> new_object = factory->NewCode(
       desc, flags, masm.CodeObject(), NeedsImmovableCode());
+
+  for (size_t i = 0; i < masm.CEC.size(); i++) {
+    rock_add_cfg_edge_combo(code_heap, masm.CEC[i].name,
+                            new_object->instruction_start() + masm.CEC[i].bary_offset,
+                            new_object->instruction_start() + masm.CEC[i].rai);
+  }
   return new_object;
 }
 

@@ -15,6 +15,11 @@
 #include "src/unicode.h"
 #include "src/x64/regexp-macro-assembler-x64.h"
 
+#include <rock.h>
+#include <vector>
+
+extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -110,6 +115,7 @@ RegExpMacroAssemblerX64::RegExpMacroAssemblerX64(
       backtrack_label_(),
       exit_label_() {
   DCHECK_EQ(0, registers_to_save % 2);
+  __ Nop(8);
   __ jmp(&entry_label_);   // We'll write the entry code when we know more.
   __ bind(&start_label_);  // And then continue from here.
 }
@@ -339,7 +345,10 @@ void RegExpMacroAssemblerX64::CheckNotBackReferenceIgnoreCase(
       AllowExternalCallThatCantCauseGC scope(&masm_);
       ExternalReference compare =
           ExternalReference::re_case_insensitive_compare_uc16(isolate());
+      unsigned bary_offset = __ pc_offset();
       __ CallCFunction(compare, num_arguments);
+      __ add_cfg_edge_combo("V8CEntryRECaseInsensitiveCompareUC16",
+                            bary_offset + 0x15, __ pc_offset() - 0x15);
     }
 
     // Restore original values before reacting on result value.
@@ -886,7 +895,7 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
 #endif
   // Exit function frame, restore previous one.
   __ popq(rbp);
-  __ ret(0);
+  __ ret();
 
   // Backtrack code (branch target for conditional backtracks).
   if (backtrack_label_.is_linked()) {
@@ -947,7 +956,10 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
 #endif
     ExternalReference grow_stack =
         ExternalReference::re_grow_stack(isolate());
+    unsigned bary_offset = __ pc_offset();
     __ CallCFunction(grow_stack, num_arguments);
+    __ add_cfg_edge_combo("V8CEntryREGrowStack",
+                          bary_offset + 0x15, __ pc_offset() - 0x15);
     // If return NULL, we have failed to grow the stack, and
     // must exit with a stack-overflow exception.
     __ testp(rax, rax);
@@ -980,6 +992,18 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
       code_desc, Code::ComputeFlags(Code::REGEXP),
       masm_.CodeObject());
   PROFILE(isolate, RegExpCodeCreateEvent(*code, *source));
+
+  // the code can be either targeted by the C++ side or the JS side, so
+  // we added 8-byte nop padding at the beginning. The JS side jumps to
+  // the nop padding, but the C++ side jumps after the padding.
+  rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION_SYM, "V8JEntryRegExpMatch",
+                        code->entry() + 8);
+  rock_gen_cfg();
+  for (size_t i = 0; i < masm_.CEC.size(); i++) {
+    rock_add_cfg_edge_combo(code_heap, masm_.CEC[i].name,
+                            code->instruction_start() + masm_.CEC[i].bary_offset,
+                            code->instruction_start() + masm_.CEC[i].rai);
+  }  
   return Handle<HeapObject>::cast(code);
 }
 
@@ -1168,7 +1192,10 @@ void RegExpMacroAssemblerX64::CallCheckStackGuardState() {
 #endif
   ExternalReference stack_check =
       ExternalReference::re_check_stack_guard_state(isolate());
+  unsigned bary_offset = __ pc_offset();
   __ CallCFunction(stack_check, num_arguments);
+  __ add_cfg_edge_combo("V8CEntryCheckStackGuardState",
+                        bary_offset + 0x15, __ pc_offset() - 0x15);
 }
 
 
@@ -1325,7 +1352,7 @@ void RegExpMacroAssemblerX64::SafeCallTarget(Label* label) {
 
 void RegExpMacroAssemblerX64::SafeReturn() {
   __ addp(Operand(rsp, 0), code_object_pointer());
-  __ ret(0);
+  __ ret();
 }
 
 

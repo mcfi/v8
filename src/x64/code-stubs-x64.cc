@@ -512,8 +512,11 @@ void MathPowStub::Generate(MacroAssembler* masm) {
     {
       AllowExternalCallThatCantCauseGC scope(masm);
       __ PrepareCallCFunction(2);
+      unsigned bary_offset = masm->pc_offset();
       __ CallCFunction(
           ExternalReference::power_double_double_function(isolate()), 2);
+      __ add_cfg_edge_combo("V8CEntryPowerDoubleDouble",
+                            bary_offset + 0x12, masm->pc_offset() - 0x15);
     }
     // Return value is in xmm0.
     __ movsd(double_result, xmm0);
@@ -2177,6 +2180,8 @@ bool CEntryStub::NeedsImmovableCode() {
 
 void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryCallApiFunctionStub#N#void!%\"class.v8::FunctionCallbackInfo\"*@", 0);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
                         "V8CEntryCallApiGetterStub#N#void!%\"class.v8::Name\"*@%\"class.v8::PropertyCallbackInfo\"*@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
@@ -2186,7 +2191,7 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
                         "V8CEntryNewDeoptimizer#N#%\"class.v8::internal::Deoptimizer\"*!%\"class.v8::internal::JSFunction\"*@i32@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
+                        "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
                         "V8CEntryPowerDoubleDouble#N#double!double@double@", 0);
@@ -2195,16 +2200,16 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
                         "V8CEntryMod2Doubles#N#double!double@double@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryJSDateGetField#N#%\"class.v8::internal::Object\"*!%\"class.v8::internal::Object\"*@%\"class.v8::internal::Smi\"*@", 0);
+                        "V8CEntryJSDateGetField#N#%\"class.v8::internal::Object\"*!%\"class.v8::internal::Object\"*@%\"class.v8::internal::Smi\"*@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryRECaseInsensitiveCompareUC16#N#i32!i8*@i8*@i64@%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryRECaseInsensitiveCompareUC16#N#i32!i8*@i8*@i64@%\"class.v8::internal::Isolate\"*@", 0);
   
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryREGrowStack#N#i8*!%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryREGrowStack#N#i8*!%\"class.v8::internal::Isolate\"*@", 0);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryCheckStackGuardState#N#i32!i8**@%\"class.v8::internal::Code\"*@i8*@", 0);
+                        "V8CEntryCheckStackGuardState#N#i32!i8**@%\"class.v8::internal::Code\"*@i8*@", 0);
   CEntryStub::GenerateAheadOfTime(isolate);
   StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(isolate);
   StubFailureTrampolineStub::GenerateAheadOfTime(isolate);
@@ -3920,13 +3925,6 @@ void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
 
 void RecordWriteStub::Activate(Code* code) {
   code->GetHeap()->incremental_marking()->ActivateGeneratedStub(code);
-  //fprintf(stderr, "Activated Code: %p\n", code->instruction_start());
-  for (int i = 0; i < 4; i++) {
-    if (rai_recordwritestub[i])
-      rock_add_cfg_edge_combo(code_heap, "V8CEntryRecordWriteStub",
-                              code->instruction_start() + recordwritestub_bary_offset[i],
-                              code->instruction_start() + rai_recordwritestub[i]);
-  }
 }
 
 
@@ -3955,10 +3953,7 @@ void RecordWriteStub::Generate(MacroAssembler* masm) {
 
   __ bind(&skip_to_incremental_noncompacting);
   GenerateIncremental(masm, INCREMENTAL);
-  recordwritestub_bary_offset[2] = recordwritestub_bary_offset[0];
-  rai_recordwritestub[2] = rai_recordwritestub[0];
-  recordwritestub_bary_offset[3] = recordwritestub_bary_offset[1];
-  rai_recordwritestub[3] = rai_recordwritestub[1];
+
   __ bind(&skip_to_incremental_compacting);
   GenerateIncremental(masm, INCREMENTAL_COMPACTION);
 
@@ -3991,8 +3986,6 @@ void RecordWriteStub::GenerateIncremental(MacroAssembler* masm, Mode mode) {
     CheckNeedsToInformIncrementalMarker(
         masm, kUpdateRememberedSetOnNoNeedToInformIncrementalMarker, mode);
     InformIncrementalMarker(masm);
-    recordwritestub_bary_offset[1] = recordwritestub_bary_offset[0];
-    rai_recordwritestub[1] = rai_recordwritestub[0];
     regs_.Restore(masm);
     __ RememberedSetHelper(object(), address(), value(), save_fp_regs_mode(),
                            MacroAssembler::kReturnAtEnd);
@@ -4024,11 +4017,12 @@ void RecordWriteStub::InformIncrementalMarker(MacroAssembler* masm) {
 
   AllowExternalCallThatCantCauseGC scope(masm);
   __ PrepareCallCFunction(argument_count);
-  recordwritestub_bary_offset[0] = masm->pc_offset() + 0x12;
+  unsigned bary_offset = masm->pc_offset();
   __ CallCFunction(
       ExternalReference::incremental_marking_record_write_function(isolate()),
       argument_count);
-  rai_recordwritestub[0] = masm->pc_offset() - 0x15;
+  __ add_cfg_edge_combo("V8CEntryRecordWriteStub",
+                        bary_offset + 0x12, masm->pc_offset() - 0x15);
   regs_.RestoreCallerSaveRegisters(masm, save_fp_regs_mode());
 }
 
@@ -4700,6 +4694,7 @@ void CallApiFunctionStub::Generate(MacroAssembler* masm) {
       argc + FCA::kArgsLength + 1,
       return_value_operand,
       &context_restore_operand);
+  __ add_cfg_edge_combo("V8CEntryCallApiFunctionStub", 184, 200);
 }
 
 

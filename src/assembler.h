@@ -43,6 +43,7 @@
 #include "src/isolate.h"
 #include "src/runtime.h"
 #include "src/token.h"
+#include <vector>
 
 namespace v8 {
 
@@ -91,6 +92,24 @@ class AssemblerBase: public Malloced {
 
   static const int kMinimalBufferSize = 4*KB;
 
+  struct CFGEdgeCombo {
+    const char *name; // name
+    unsigned int bary_offset;
+    unsigned int rai;
+
+    CFGEdgeCombo(const char* name,
+                 unsigned int bary_offset,
+                 unsigned rai) :
+      name(name), bary_offset(bary_offset), rai(rai) {}
+  };
+
+  std::vector<CFGEdgeCombo> CEC;
+
+  void add_cfg_edge_combo(const char* name,
+                          unsigned int bary_offset,
+                          unsigned int rai) {
+    CEC.push_back(CFGEdgeCombo(name, bary_offset, rai));
+  }
  protected:
   // The buffer into which code and relocation info are generated. It could
   // either be owned by the assembler or be provided externally.

@@ -2697,7 +2697,7 @@ void Heap::CreateJSEntryStub() {
   JSEntryStub stub(isolate(), StackFrame::ENTRY);
   set_js_entry_code(*stub.GetCode());
   rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION,
-                        "{\nV8JSEntryStub\nY %\"class.v8::internal::Object\"*!i8*@%\"class.v8::internal::Object\"*@%\"class.v8::internal::Object\"*@i32@%\"class.v8::internal::Object\"***@\n}", 0);
+                        "{ V8JSEntryStub\nY %\"class.v8::internal::Object\"*!i8*@%\"class.v8::internal::Object\"*@%\"class.v8::internal::Object\"*@i32@%\"class.v8::internal::Object\"***@\n}", 0);
   rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION_SYM, "V8JSEntryStub",
                         (*stub.GetCode())->entry());
 }
@@ -2707,7 +2707,7 @@ void Heap::CreateJSConstructEntryStub() {
   JSEntryStub stub(isolate(), StackFrame::ENTRY_CONSTRUCT);
   set_js_construct_entry_code(*stub.GetCode());
   rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION,
-                        "{\nV8JSConstructEntryStub\nY %\"class.v8::internal::Object\"*!i8*@%\"class.v8::internal::Object\"*@%\"class.v8::internal::Object\"*@i32@%\"class.v8::internal::Object\"***@\n}", 0);
+                        "{ V8JSConstructEntryStub\nY %\"class.v8::internal::Object\"*!i8*@%\"class.v8::internal::Object\"*@%\"class.v8::internal::Object\"*@i32@%\"class.v8::internal::Object\"***@\n}", 0);
   rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION_SYM, "V8JSConstructEntryStub",
                         (*stub.GetCode())->entry());
 }
@@ -2740,6 +2740,9 @@ void Heap::CreateFixedStubs() {
   // To workaround the problem, make separate functions without inlining.
   Heap::CreateJSEntryStub();
   Heap::CreateJSConstructEntryStub();
+  rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION,
+                        "{ V8JEntryRegExpMatch\nY i32!%\"class.v8::internal::String\"*@i32@i8*@i8*@i32*@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@\n}",
+                        0);  
   rock_gen_cfg();
 }
 

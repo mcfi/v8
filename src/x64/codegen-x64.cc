@@ -33,7 +33,8 @@ void StubRuntimeCallHelper::AfterCall(MacroAssembler* masm) const {
 
 
 UnaryMathFunction CreateExpFunction() {
-  if (!FLAG_fast_math) return &std::exp;
+  return &std::exp;
+  /*
   size_t actual_size;
   byte* buffer =
       static_cast<byte*>(base::OS::Allocate(1 * KB, &actual_size, true));
@@ -61,10 +62,13 @@ UnaryMathFunction CreateExpFunction() {
   CpuFeatures::FlushICache(buffer, actual_size);
   base::OS::ProtectCode(buffer, actual_size);
   return FUNCTION_CAST<UnaryMathFunction>(buffer);
+  */
 }
 
 
 UnaryMathFunction CreateSqrtFunction() {
+  return &std::sqrt;
+  /*
   size_t actual_size;
   // Allocate buffer in executable space.
   byte* buffer =
@@ -84,6 +88,7 @@ UnaryMathFunction CreateSqrtFunction() {
   CpuFeatures::FlushICache(buffer, actual_size);
   base::OS::ProtectCode(buffer, actual_size);
   return FUNCTION_CAST<UnaryMathFunction>(buffer);
+  */
 }
 
 

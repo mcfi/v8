@@ -137,7 +137,8 @@ NativeRegExpMacroAssembler::Result NativeRegExpMacroAssembler::Execute(
   Address stack_base = stack_scope.stack()->stack_base();
 
   int direct_call = 0;
-  int result = CALL_GENERATED_REGEXP_CODE(code->entry(),
+  // Jump over the 8-byte nop padding
+  int result = CALL_GENERATED_REGEXP_CODE(code->entry()+8,
                                           input,
                                           start_offset,
                                           input_start,
