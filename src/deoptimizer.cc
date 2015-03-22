@@ -2828,34 +2828,18 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   CopyBytes(chunk->area_start() + isolate->code_range()->Offset(), desc.buffer,
       static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                          "V8CEntryNewDeoptimizer#N#%\"class.v8::internal::Deoptimizer\"*!%\"class.v8::internal::JSFunction\"*@i32@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@", 0);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-    "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryNewDeoptimizer",
-                        data->deopt_entry_code_[type]->area_start() +
-                        rai_new_deoptimizer_bary_offset
-                        );
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryComputeOutputFrames",
-                        data->deopt_entry_code_[type]->area_start() +
-                        rai_compute_output_frames_bary_offset
-                        );
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryNewDeoptimizer",
-                        data->deopt_entry_code_[type]->area_start() +
-                        rai_new_deoptimizer
-                        );
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryComputeOutputFrames",
-                        data->deopt_entry_code_[type]->area_start() +
-                        rai_compute_output_frames
-                        );
-  // generate the cfg
-  rock_gen_cfg();
-
+  rock_add_cfg_edge_combo(code_heap, "V8CEntryNewDeoptimizer",
+                          chunk->area_start() +
+                          rai_new_deoptimizer_bary_offset,
+                          chunk->area_start() +
+                          rai_new_deoptimizer);
+  
+  rock_add_cfg_edge_combo(code_heap, "V8CEntryComputeOutputFrames",
+                          chunk->area_start() +
+                          rai_compute_output_frames_bary_offset,
+                          chunk->area_start() +
+                          rai_compute_output_frames);
   data->deopt_entry_code_entries_[type] = entry_count;
 }
 

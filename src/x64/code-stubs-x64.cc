@@ -2176,6 +2176,35 @@ bool CEntryStub::NeedsImmovableCode() {
 
 
 void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryCallApiGetterStub#N#void!%\"class.v8::Name\"*@%\"class.v8::PropertyCallbackInfo\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryRecordWriteStub#N#void!%\"class.v8::internal::HeapObject\"*@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryNewDeoptimizer#N#%\"class.v8::internal::Deoptimizer\"*!%\"class.v8::internal::JSFunction\"*@i32@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryPowerDoubleDouble#N#double!double@double@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryMod2Doubles#N#double!double@double@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryJSDateGetField#N#%\"class.v8::internal::Object\"*!%\"class.v8::internal::Object\"*@%\"class.v8::internal::Smi\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryRECaseInsensitiveCompareUC16#N#i32!i8*@i8*@i64@%\"class.v8::internal::Isolate\"*@", 0);
+  
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryREGrowStack#N#i8*!%\"class.v8::internal::Isolate\"*@", 0);
+
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+    "V8CEntryCheckStackGuardState#N#i32!i8**@%\"class.v8::internal::Code\"*@i8*@", 0);
   CEntryStub::GenerateAheadOfTime(isolate);
   StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(isolate);
   StubFailureTrampolineStub::GenerateAheadOfTime(isolate);
@@ -2184,10 +2213,6 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
   CreateAllocationSiteStub::GenerateAheadOfTime(isolate);
   BinaryOpICStub::GenerateAheadOfTime(isolate);
   BinaryOpICWithAllocationSiteStub::GenerateAheadOfTime(isolate);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCallApiGetterStub#N#void!%\"class.v8::Name\"*@%\"class.v8::PropertyCallbackInfo\"*@", 0);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRecordWriteStub#N#void!%\"class.v8::internal::HeapObject\"*@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
 }
 
 
@@ -3895,21 +3920,13 @@ void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
 
 void RecordWriteStub::Activate(Code* code) {
   code->GetHeap()->incremental_marking()->ActivateGeneratedStub(code);
-  fprintf(stderr, "Activated Code: %p\n", code->instruction_start());
+  //fprintf(stderr, "Activated Code: %p\n", code->instruction_start());
   for (int i = 0; i < 4; i++) {
     if (rai_recordwritestub[i])
-      rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                            "V8CEntryRecordWriteStub",
-                            code->instruction_start() + rai_recordwritestub[i]);
+      rock_add_cfg_edge_combo(code_heap, "V8CEntryRecordWriteStub",
+                              code->instruction_start() + recordwritestub_bary_offset[i],
+                              code->instruction_start() + rai_recordwritestub[i]);
   }
-  for (int i = 0; i < 4; i++) {
-    if (recordwritestub_bary_offset[i])
-      rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                            "V8CEntryRecordWriteStub",
-                            code->instruction_start() + recordwritestub_bary_offset[i]);
-  }
-  
-  rock_gen_cfg();
 }
 
 
