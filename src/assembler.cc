@@ -55,6 +55,7 @@
 #include "src/runtime.h"
 #include "src/serialize.h"
 #include "src/token.h"
+#include "src/accessors.h"
 
 #if V8_TARGET_ARCH_IA32
 #include "src/ia32/assembler-ia32-inl.h"  // NOLINT
@@ -1571,4 +1572,141 @@ bool PositionsRecorder::WriteRecordedPositions() {
   return written;
 }
 
+// Dummy functions that triggers CFG gen
+void dummy_CallApiGetterStub(void *f,
+                             v8::Local<v8::Name> property,
+                             const v8::PropertyCallbackInfo<v8::Value>& info) {
+  typedef void (*target_type_getter)(v8::Local<v8::Name>,
+                                     const v8::PropertyCallbackInfo<v8::Value>&);
+  Accessors::FunctionNameGetter(property, info);
+  // the loop prevents tail-call-opt
+  for (size_t i = 0; i < UINT_MAX; i++)
+    ((target_type_getter)f)(property, info);
+}
+
+void dummy_CallApiFunctionStub(void *f,
+                               const v8::FunctionCallbackInfo<v8::Value>& value) {
+  typedef void (*target_type_function)(const v8::FunctionCallbackInfo<v8::Value>&);
+  
+  dummy_ApiFunction(value);
+  // the loop prevents tail-call-opt
+  for (size_t i = 0; i < UINT_MAX; i++)
+    ((target_type_function)f)(value);
+}
+
+void dummy_Deoptimizer(void *f,
+                       Deoptimizer* deopt,
+                       JSFunction* function,
+                       Deoptimizer::BailoutType type,
+                       unsigned bailout_id,
+                       Address from,
+                       int fp_to_sp_delta,
+                       Isolate* isolate) {
+  typedef Deoptimizer* (*target_type_deoptimizer_new)(Deoptimizer* deopt,
+                                                      JSFunction* function,
+                                                      Deoptimizer::BailoutType type,
+                                                      unsigned bailout_id,
+                                                      Address from,
+                                                      int fp_to_sp_delta,
+                                                      Isolate* isolate);
+  ((target_type_deoptimizer_new)f)(deopt, function, type, bailout_id,
+                                   from, fp_to_sp_delta, isolate);
+  Deoptimizer::New(function, type, bailout_id, from, fp_to_sp_delta, isolate);
+  // the loop prevents tail-call-opt
+  typedef void (*target_type_deoptimizer_compute_output_frames)(Deoptimizer* deopt);
+  Deoptimizer::ComputeOutputFrames(deopt);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type_deoptimizer_compute_output_frames)f)(deopt);
+  }
+}
+
+void dummy_Double(void *f) {
+  typedef double (*target_type)(double, double);
+  power_double_double(0.0f, 0.0f);
+  modulo(0.0f, 0.0f);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(0.0f, 0.0f);
+  }
+}
+
+void dummy_JSDateGetField(void *f,
+                          Object* object, Smi* index) {
+  typedef Object* (*target_type)(Object*, Smi*);
+  JSDate::GetField(object, index);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(object, index);
+  }
+}
+
+void dummy_RecordWriteStub(void *f, HeapObject* obj, Object** slot,
+                           Isolate* isolate) {
+  typedef void (*target_type)(HeapObject*, Object**, Isolate*);
+  IncrementalMarking::RecordWriteFromCode(obj, slot, isolate);
+  // the loop prevents tail-call-opt
+  for (size_t i = 0; i < 1000; i++)
+    ((target_type)(f))(obj, slot, isolate);
+}
+
+
+void dummy_RegExpEngine(void *f,
+                        Address byte_offset,
+                        size_t byte_length,
+                        Isolate* isolate,
+                        Code* re_code) {
+  typedef int
+    (*target_type_CaseInsensitiveCompareUC16)(Address,
+                                              Address,
+                                              size_t,
+                                              Isolate*);
+  NativeRegExpMacroAssembler::CaseInsensitiveCompareUC16(byte_offset,
+                                                         byte_offset,
+                                                         byte_length,
+                                                         isolate);
+  ((target_type_CaseInsensitiveCompareUC16)f)(byte_offset,
+                                              byte_offset,
+                                              byte_length,
+                                              isolate);
+  typedef Address
+    (*target_type_GrowStack)(Address,
+                             Address*,
+                             Isolate*);
+  NativeRegExpMacroAssembler::GrowStack(byte_offset, &byte_offset, isolate);
+  ((target_type_GrowStack)f)(byte_offset, &byte_offset, isolate);
+
+  typedef int
+    (*target_type_CheckStackGuardState)(Address*,
+                                        Code*,
+                                        Address);
+  RegExpMacroAssemblerX64::CheckStackGuardState(&byte_offset, re_code, byte_offset);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type_CheckStackGuardState)f)(&byte_offset, re_code, byte_offset);
+  }
+}
+
+void dummy_StoreBufferOverflowStub(void *f, Isolate* isolate) {
+  typedef void (*target_type)(Isolate*);
+  StoreBuffer::StoreBufferOverflow(isolate);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(isolate);
+  }
+}
+
+void dummy_CodeAgeSequence(void *f,
+                           byte* sequence, Isolate *isolate) {
+  typedef void (*target_type)(byte*, Isolate*);
+  Code::MakeCodeAgeSequenceYoung(sequence, isolate);
+  Code::MarkCodeAsExecuted(sequence, isolate);  
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(sequence, isolate);
+  }
+}
+
+void dummy_HandleScopeDeleteExtensions(void *f,
+                                       Isolate* isolate) {
+  HandleScope::DeleteExtensions(isolate);
+  typedef void (*target_type)(Isolate*);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(isolate);
+  }
+}
 } }  // namespace v8::internal

@@ -10,6 +10,9 @@
 #include "src/heap/mark-compact.h"
 #include "src/macro-assembler.h"
 #include "src/msan.h"
+#include <rock.h>
+
+extern "C" void *code_heap;
 
 namespace v8 {
 namespace internal {
@@ -227,7 +230,9 @@ bool CodeRange::CommitRawMemory(Address start, size_t length) {
 
 
 bool CodeRange::UncommitRawMemory(Address start, size_t length) {
-  //memset(start + Offset(), 0, length);
+  // update the CFG so that this region is unreachable
+  rock_delete_code(code_heap, start, length);
+  memset(start + Offset(), 0, length);
   return true;
   //return code_range_->Uncommit(start, length);
 }
@@ -236,6 +241,8 @@ bool CodeRange::UncommitRawMemory(Address start, size_t length) {
 void CodeRange::FreeRawMemory(Address address, size_t length) {
   DCHECK(IsAddressAligned(address, MemoryChunk::kAlignment));
   free_list_.Add(FreeBlock(address, length));
+  // update the CFG so that this region is unreachable
+  rock_delete_code(code_heap, address, length);
   memset(address + Offset(), 0, length);
   //code_range_->Uncommit(address, length);
 }
@@ -2190,7 +2197,6 @@ void FreeList::Reset() {
 
 int FreeList::Free(Address start, int size_in_bytes) {
   if (size_in_bytes == 0) return 0;
-
   FreeListNode* node = FreeListNode::FromAddress(start);
   node->set_size(heap_, size_in_bytes);
   Page* page = Page::FromAddress(start);
@@ -2218,6 +2224,9 @@ int FreeList::Free(Address start, int size_in_bytes) {
   }
 
   DCHECK(IsVeryLong() || available() == SumFreeLists());
+  if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
+    rock_delete_code(code_heap, start, size_in_bytes);
+  }
   return 0;
 }
 

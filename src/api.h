@@ -693,6 +693,8 @@ class Testing {
   static v8::Testing::StressType stress_type_;
 };
 
+void dummy_ApiFunction(const v8::FunctionCallbackInfo<v8::Value>& args);
+
 } }  // namespace v8::internal
 
 #endif  // V8_API_H_

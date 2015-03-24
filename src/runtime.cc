@@ -15768,4 +15768,15 @@ const Runtime::Function* Runtime::FunctionForId(Runtime::FunctionId id) {
   return &(kIntrinsicFunctions[static_cast<int>(id)]);
 }
 
+void dummy_CEntryStub(void *f,
+                      int args_length,
+                      Object** args_object,
+                      Isolate* isolate
+                      ) {
+  Runtime_CreateObjectLiteral(args_length, args_object, isolate);  
+  typedef Object* (*target_type)(int args_length, Object** args_object, Isolate* isolate);
+  for (size_t i = 0; i < UINT_MAX; i++)
+    ((target_type)f)(args_length, args_object, isolate);
+}
+
 } }  // namespace v8::internal

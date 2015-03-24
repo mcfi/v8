@@ -670,9 +670,18 @@ void NamedLoadHandlerCompiler::GenerateLoadCallback(
 
   CallApiGetterStub stub(isolate());
 
-  rock_add_cfg_edge_combo(code_heap, "V8CEntryCallApiGetterStub",
-                          (*stub.GetCode())->instruction_start() + 137,
-                          (*stub.GetCode())->instruction_start() + 152);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryCallApiGetterStub",
+                        (*stub.GetCode())->instruction_start() + 137);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryCallApiGetterStub",
+                        (*stub.GetCode())->instruction_start() + 152);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryHandleScopeDeleteExtensions",
+                        (*stub.GetCode())->instruction_start() + 324);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryHandleScopeDeleteExtensions",
+                        (*stub.GetCode())->instruction_start() + 336);
   __ TailCallStub(&stub);
 }
 

@@ -25,6 +25,11 @@ namespace internal {
 
 #ifndef V8_INTERPRETED_REGEXP
 
+int dummy_RegExpExecute(String* a, int b, const byte* c,
+                        const byte* d, int* e, int f, Address g, int h, Isolate* i) {
+  __asm__ __volatile__("hlt":::"memory");
+  return 0;
+}
 /*
  * This assembler uses the following register assignment convention
  * - rdx : Currently loaded character(s) as Latin1 or UC16.  Must be loaded
@@ -996,14 +1001,16 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   // the code can be either targeted by the C++ side or the JS side, so
   // we added 8-byte nop padding at the beginning. The JS side jumps to
   // the nop padding, but the C++ side jumps after the padding.
-  rock_reg_cfg_metadata(code_heap, ROCK_FUNCTION_SYM, "V8JEntryRegExpMatch",
-                        code->entry() + 8);
-  rock_gen_cfg();
+  rock_reg_cfg_metadata(code_heap, ROCK_FUNC_SYM,
+                        code->entry() + 8,
+                        (const void*)dummy_RegExpExecute);
+
   for (size_t i = 0; i < masm_.CEC.size(); i++) {
-    rock_add_cfg_edge_combo(code_heap, masm_.CEC[i].name,
-                            code->instruction_start() + masm_.CEC[i].bary_offset,
-                            code->instruction_start() + masm_.CEC[i].rai);
-  }  
+    rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM, masm_.CEC[i].name,
+                          code->instruction_start() + masm_.CEC[i].bary_offset);
+    rock_reg_cfg_metadata(code_heap, ROCK_RAI, masm_.CEC[i].name,
+                          code->instruction_start() + masm_.CEC[i].rai);
+  }
   return Handle<HeapObject>::cast(code);
 }
 

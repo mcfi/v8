@@ -1540,7 +1540,9 @@ void Builtins::InitBuiltinFunctionTable() {
 
 void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
   DCHECK(!initialized_);
-
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryBuiltin",
+                        (const void*)Code::MakeCodeAgeSequenceYoung);
   // Create a scope for the handles in the builtins.
   HandleScope scope(isolate);
 
@@ -1617,9 +1619,6 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
 
   // Mark as initialized.
   initialized_ = true;
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryBuiltin#N#void!i8*@%\"class.v8::internal::Isolate\"*@", 0);
-  rock_gen_cfg();
 }
 
 

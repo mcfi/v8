@@ -2829,17 +2829,22 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
       static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
-  rock_add_cfg_edge_combo(code_heap, "V8CEntryNewDeoptimizer",
-                          chunk->area_start() +
-                          rai_new_deoptimizer_bary_offset,
-                          chunk->area_start() +
-                          rai_new_deoptimizer);
-  
-  rock_add_cfg_edge_combo(code_heap, "V8CEntryComputeOutputFrames",
-                          chunk->area_start() +
-                          rai_compute_output_frames_bary_offset,
-                          chunk->area_start() +
-                          rai_compute_output_frames);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryNewDeoptimizer",
+                        chunk->area_start() +
+                        rai_new_deoptimizer_bary_offset);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryNewDeoptimizer",
+                        chunk->area_start() +
+                        rai_new_deoptimizer);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
+                        "V8CEntryComputeOutputFrames",
+                        chunk->area_start() +
+                        rai_compute_output_frames_bary_offset);
+  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
+                        "V8CEntryComputeOutputFrames",
+                        chunk->area_start() +
+                        rai_compute_output_frames);
   data->deopt_entry_code_entries_[type] = entry_count;
 }
 

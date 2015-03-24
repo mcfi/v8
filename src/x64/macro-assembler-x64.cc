@@ -859,11 +859,16 @@ void MacroAssembler::CallApiFunctionAndReturn(
   LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
   LoadAddress(rax,
               ExternalReference::delete_handle_scope_extensions(isolate()));
-  call(rax);
+  Label Check1;
+  Label Try1;
+  bind(&Try1);
+  call_mcfi(rax, r10, r11, &Check1);
   movp(rax, prev_limit_reg);
   jmp(&leave_exit_frame);
   bind(&Check);
   check(rax, r10, r11, &Try);
+  bind(&Check1);
+  check(rax, r10, r11, &Try1);
 }
 
 

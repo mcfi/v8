@@ -135,9 +135,10 @@ Handle<Code> PlatformCodeStub::GenerateCode() {
       desc, flags, masm.CodeObject(), NeedsImmovableCode());
 
   for (size_t i = 0; i < masm.CEC.size(); i++) {
-    rock_add_cfg_edge_combo(code_heap, masm.CEC[i].name,
-                            new_object->instruction_start() + masm.CEC[i].bary_offset,
-                            new_object->instruction_start() + masm.CEC[i].rai);
+    rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM, masm.CEC[i].name,
+                          new_object->instruction_start() + masm.CEC[i].bary_offset);
+    rock_reg_cfg_metadata(code_heap, ROCK_RAI, masm.CEC[i].name,
+                          new_object->instruction_start() + masm.CEC[i].rai);
   }
   return new_object;
 }

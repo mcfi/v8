@@ -7661,5 +7661,6 @@ void InvokeFunctionCallback(const v8::FunctionCallbackInfo<v8::Value>& info,
   callback(info);
 }
 
-
+void dummy_ApiFunction(const v8::FunctionCallbackInfo<v8::Value>& args) {
+}
 } }  // namespace v8::internal

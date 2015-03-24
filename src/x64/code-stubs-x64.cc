@@ -9,12 +9,15 @@
 #include "src/bootstrapper.h"
 #include "src/code-stubs.h"
 #include "src/codegen.h"
+#include "src/deoptimizer.h"
 #include "src/ic/handler-compiler.h"
 #include "src/ic/ic.h"
 #include "src/isolate.h"
 #include "src/jsregexp.h"
 #include "src/regexp-macro-assembler.h"
+#include "src/x64/regexp-macro-assembler-x64.h"
 #include "src/runtime.h"
+#include "src/accessors.h"
 
 #include <rock.h>
 
@@ -2180,36 +2183,50 @@ bool CEntryStub::NeedsImmovableCode() {
 
 void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCallApiFunctionStub#N#void!%\"class.v8::FunctionCallbackInfo\"*@", 0);
+                        "V8CEntryCallApiGetterStub",
+                        (const void*)Accessors::FunctionNameGetter);
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCallApiGetterStub#N#void!%\"class.v8::Name\"*@%\"class.v8::PropertyCallbackInfo\"*@", 0);
+                        "V8CEntryCallApiFunctionStub",
+                        (const void*)dummy_ApiFunction);
+  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
+                        "V8CEntryHandleScopeDeleteExtensions",
+                        (const void*)HandleScope::DeleteExtensions);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRecordWriteStub#N#void!%\"class.v8::internal::HeapObject\"*@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryRecordWriteStub",
+                        (const void*)IncrementalMarking::RecordWriteFromCode);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryNewDeoptimizer#N#%\"class.v8::internal::Deoptimizer\"*!%\"class.v8::internal::JSFunction\"*@i32@i32@i8*@i32@%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryNewDeoptimizer",
+                        (const void*)Deoptimizer::New);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryComputeOutputFrames#N#void!%\"class.v8::internal::Deoptimizer\"*@", 0);
+                        "V8CEntryComputeOutputFrames",
+                        (const void*)Deoptimizer::ComputeOutputFrames);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryPowerDoubleDouble#N#double!double@double@", 0);
+                        "V8CEntryPowerDoubleDouble",
+                        (const void*)power_double_double);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryMod2Doubles#N#double!double@double@", 0);
+                        "V8CEntryMod2Doubles",
+                        (const void*)modulo);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryJSDateGetField#N#%\"class.v8::internal::Object\"*!%\"class.v8::internal::Object\"*@%\"class.v8::internal::Smi\"*@", 0);
+                        "V8CEntryJSDateGetField",
+                        (const void*)JSDate::GetField);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRECaseInsensitiveCompareUC16#N#i32!i8*@i8*@i64@%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryRECaseInsensitiveCompareUC16",
+                        (const void*)NativeRegExpMacroAssembler::CaseInsensitiveCompareUC16);
   
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryREGrowStack#N#i8*!%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryREGrowStack",
+                        (const void*)NativeRegExpMacroAssembler::GrowStack);
 
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCheckStackGuardState#N#i32!i8**@%\"class.v8::internal::Code\"*@i8*@", 0);
+                        "V8CEntryCheckStackGuardState",
+                        (const void*)RegExpMacroAssemblerX64::CheckStackGuardState);
   CEntryStub::GenerateAheadOfTime(isolate);
   StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(isolate);
   StubFailureTrampolineStub::GenerateAheadOfTime(isolate);
@@ -2224,24 +2241,25 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
 void CodeStub::GenerateFPStubs(Isolate* isolate) {
 }
 
+DECLARE_RUNTIME_FUNCTION(Runtime_CreateObjectLiteral);
 
 void CEntryStub::GenerateAheadOfTime(Isolate* isolate) {
   CEntryStub stub(isolate, 1, kDontSaveFPRegs);
   stub.GetCode();
+
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryDontSaveFPRegs#N#%\"class.v8::internal::Object\"*!i32@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryRuntime",
+                        (const void*)Runtime_CreateObjectLiteral);
   rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryDontSaveFPRegs", (*stub.GetCode())->instruction_start() + 96);  
+                        "V8CEntryRuntime", (*stub.GetCode())->instruction_start() + 96);  
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryDontSaveFPRegs", (*stub.GetCode())->instruction_start() + 77);
+                        "V8CEntryRuntime", (*stub.GetCode())->instruction_start() + 77);
   CEntryStub save_doubles(isolate, 1, kSaveFPRegs);
   save_doubles.GetCode();
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntrySaveFPRegs#N#%\"class.v8::internal::Object\"*!i32@%\"class.v8::internal::Object\"**@%\"class.v8::internal::Isolate\"*@", 0);
   rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntrySaveFPRegs", (*save_doubles.GetCode())->instruction_start() + 200);
+                        "V8CEntryRuntime", (*save_doubles.GetCode())->instruction_start() + 200);
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntrySaveFPRegs", (*save_doubles.GetCode())->instruction_start() + 181);
+                        "V8CEntryRuntime", (*save_doubles.GetCode())->instruction_start() + 181);
 
 }
 
@@ -3904,22 +3922,21 @@ void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
   StoreBufferOverflowStub stub1(isolate, kDontSaveFPRegs);
   stub1.GetCode();
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs#N#void!%\"class.v8::internal::Isolate\"*@", 0);
+                        "V8CEntryStoreBufferOverflowStub",
+                        (const void*)StoreBuffer::StoreBufferOverflow);
   rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs",
+                        "V8CEntryStoreBufferOverflowStub",
                         (*stub1.GetCode())->instruction_start() + 72);
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryStoreBufferOverflowStubDontSaveFPRegs",
+                        "V8CEntryStoreBufferOverflowStub",
                         (*stub1.GetCode())->instruction_start() + 54);
   StoreBufferOverflowStub stub2(isolate, kSaveFPRegs);
   stub2.GetCode();
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryStoreBufferOverflowStubSaveFPRegs#N#void!%\"class.v8::internal::Isolate\"*@", 0);
   rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryStoreBufferOverflowStubSaveFPRegs",
+                        "V8CEntryStoreBufferOverflowStub",
                         (*stub2.GetCode())->instruction_start() + 192);
   rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryStoreBufferOverflowStubSaveFPRegs",
+                        "V8CEntryStoreBufferOverflowStub",
                         (*stub2.GetCode())->instruction_start() + 179);
 }
 
@@ -4695,6 +4712,7 @@ void CallApiFunctionStub::Generate(MacroAssembler* masm) {
       return_value_operand,
       &context_restore_operand);
   __ add_cfg_edge_combo("V8CEntryCallApiFunctionStub", 184, 200);
+  __ add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions", 369, 384);
 }
 
 
