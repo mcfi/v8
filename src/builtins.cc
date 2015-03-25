@@ -18,10 +18,6 @@
 #include "src/prototype.h"
 #include "src/vm-state-inl.h"
 
-#include <rock.h>
-
-extern "C" void *code_heap;
-
 namespace v8 {
 namespace internal {
 
@@ -1540,9 +1536,10 @@ void Builtins::InitBuiltinFunctionTable() {
 
 void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
   DCHECK(!initialized_);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryBuiltin",
-                        (const void*)Code::MakeCodeAgeSequenceYoung);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryBuiltin",
+                            (void*)Code::MakeCodeAgeSequenceYoung);
   // Create a scope for the handles in the builtins.
   HandleScope scope(isolate);
 
@@ -1603,10 +1600,14 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
     case kMake##name##CodeYoungAgainEvenMarking:
       switch(functions[i].name) {
         CODE_AGE_LIST(CASE)
-        rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                              "V8CEntryBuiltin", code->instruction_start() + 76);
-        rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                              "V8CEntryBuiltin", code->instruction_start() + 88);
+        isolate->code_range()->
+          RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                                  "V8CEntryBuiltin",
+                                  (void*)(code->instruction_start() + 76));
+        isolate->code_range()->
+          RockRegisterCFGMetaData(ROCK_RAI,
+                                  "V8CEntryBuiltin",
+                                  (void*)(code->instruction_start() + 88));
         break;
       }
 #undef CASE

@@ -15,10 +15,7 @@
 #include "src/unicode.h"
 #include "src/x64/regexp-macro-assembler-x64.h"
 
-#include <rock.h>
 #include <vector>
-
-extern "C" void *code_heap;
 
 namespace v8 {
 namespace internal {
@@ -1001,15 +998,18 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   // the code can be either targeted by the C++ side or the JS side, so
   // we added 8-byte nop padding at the beginning. The JS side jumps to
   // the nop padding, but the C++ side jumps after the padding.
-  rock_reg_cfg_metadata(code_heap, ROCK_FUNC_SYM,
-                        code->entry() + 8,
-                        (const void*)dummy_RegExpExecute);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_FUNC_SYM,
+                            (void*)(code->entry() + 8),
+                            (void*)dummy_RegExpExecute);
 
   for (size_t i = 0; i < masm_.CEC.size(); i++) {
-    rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM, masm_.CEC[i].name,
-                          code->instruction_start() + masm_.CEC[i].bary_offset);
-    rock_reg_cfg_metadata(code_heap, ROCK_RAI, masm_.CEC[i].name,
-                          code->instruction_start() + masm_.CEC[i].rai);
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm_.CEC[i].name,
+                              (void*)(code->instruction_start() + masm_.CEC[i].bary_offset));
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_RAI, masm_.CEC[i].name,
+                              (void*)(code->instruction_start() + masm_.CEC[i].rai));
   }
   return Handle<HeapObject>::cast(code);
 }

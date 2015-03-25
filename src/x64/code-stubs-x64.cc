@@ -19,10 +19,6 @@
 #include "src/runtime.h"
 #include "src/accessors.h"
 
-#include <rock.h>
-
-extern "C" void *code_heap;
-
 namespace v8 {
 namespace internal {
 
@@ -2182,51 +2178,63 @@ bool CEntryStub::NeedsImmovableCode() {
 
 
 void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCallApiGetterStub",
-                        (const void*)Accessors::FunctionNameGetter);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCallApiFunctionStub",
-                        (const void*)dummy_ApiFunction);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryHandleScopeDeleteExtensions",
-                        (const void*)HandleScope::DeleteExtensions);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryCallApiGetterStub",
+                            (void*)Accessors::FunctionNameGetter);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryCallApiFunctionStub",
+                            (void*)dummy_ApiFunction);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryHandleScopeDeleteExtensions",
+                            (void*)HandleScope::DeleteExtensions);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRecordWriteStub",
-                        (const void*)IncrementalMarking::RecordWriteFromCode);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryRecordWriteStub",
+                            (void*)IncrementalMarking::RecordWriteFromCode);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryNewDeoptimizer",
-                        (const void*)Deoptimizer::New);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryNewDeoptimizer",
+                            (void*)Deoptimizer::New);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryComputeOutputFrames",
-                        (const void*)Deoptimizer::ComputeOutputFrames);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryComputeOutputFrames",
+                            (void*)Deoptimizer::ComputeOutputFrames);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryPowerDoubleDouble",
-                        (const void*)power_double_double);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryPowerDoubleDouble",
+                            (void*)power_double_double);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryMod2Doubles",
-                        (const void*)modulo);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryMod2Doubles",
+                            (void*)modulo);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryJSDateGetField",
-                        (const void*)JSDate::GetField);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryJSDateGetField",
+                            (void*)JSDate::GetField);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRECaseInsensitiveCompareUC16",
-                        (const void*)NativeRegExpMacroAssembler::CaseInsensitiveCompareUC16);
-  
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryREGrowStack",
-                        (const void*)NativeRegExpMacroAssembler::GrowStack);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryRECaseInsensitiveCompareUC16",
+                            (void*)NativeRegExpMacroAssembler::CaseInsensitiveCompareUC16);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryCheckStackGuardState",
-                        (const void*)RegExpMacroAssemblerX64::CheckStackGuardState);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryREGrowStack",
+                            (void*)NativeRegExpMacroAssembler::GrowStack);
+
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryCheckStackGuardState",
+                            (void*)RegExpMacroAssemblerX64::CheckStackGuardState);
   CEntryStub::GenerateAheadOfTime(isolate);
   StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(isolate);
   StubFailureTrampolineStub::GenerateAheadOfTime(isolate);
@@ -2247,19 +2255,28 @@ void CEntryStub::GenerateAheadOfTime(Isolate* isolate) {
   CEntryStub stub(isolate, 1, kDontSaveFPRegs);
   stub.GetCode();
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryRuntime",
-                        (const void*)Runtime_CreateObjectLiteral);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryRuntime", (*stub.GetCode())->instruction_start() + 96);  
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryRuntime", (*stub.GetCode())->instruction_start() + 77);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryRuntime",
+                            (void*)Runtime_CreateObjectLiteral);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryRuntime",
+                            (void*)((*stub.GetCode())->instruction_start() + 96));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryRuntime",
+                            (void*)((*stub.GetCode())->instruction_start() + 77));
   CEntryStub save_doubles(isolate, 1, kSaveFPRegs);
   save_doubles.GetCode();
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryRuntime", (*save_doubles.GetCode())->instruction_start() + 200);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryRuntime", (*save_doubles.GetCode())->instruction_start() + 181);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryRuntime",
+                            (void*)((*save_doubles.GetCode())->instruction_start() + 200));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryRuntime",
+                            (void*)((*save_doubles.GetCode())->instruction_start() + 181));
 
 }
 
@@ -3921,23 +3938,28 @@ void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
     Isolate* isolate) {
   StoreBufferOverflowStub stub1(isolate, kDontSaveFPRegs);
   stub1.GetCode();
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ,
-                        "V8CEntryStoreBufferOverflowStub",
-                        (const void*)StoreBuffer::StoreBufferOverflow);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryStoreBufferOverflowStub",
-                        (*stub1.GetCode())->instruction_start() + 72);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryStoreBufferOverflowStub",
-                        (*stub1.GetCode())->instruction_start() + 54);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryStoreBufferOverflowStub",
+                            (void*)StoreBuffer::StoreBufferOverflow);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryStoreBufferOverflowStub",
+                            (void*)((*stub1.GetCode())->instruction_start() + 72));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryStoreBufferOverflowStub",
+                            (void*)((*stub1.GetCode())->instruction_start() + 54));
   StoreBufferOverflowStub stub2(isolate, kSaveFPRegs);
   stub2.GetCode();
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryStoreBufferOverflowStub",
-                        (*stub2.GetCode())->instruction_start() + 192);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryStoreBufferOverflowStub",
-                        (*stub2.GetCode())->instruction_start() + 179);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryStoreBufferOverflowStub",
+                            (void*)((*stub2.GetCode())->instruction_start() + 192));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryStoreBufferOverflowStub",
+                            (void*)((*stub2.GetCode())->instruction_start() + 179));
 }
 
 void RecordWriteStub::Activate(Code* code) {

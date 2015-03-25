@@ -13,9 +13,6 @@
 #include "src/macro-assembler.h"
 #include "src/prettyprinter.h"
 
-#include <rock.h>
-extern "C" void *code_heap;
-
 namespace v8 {
 namespace internal {
 
@@ -2829,22 +2826,26 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
       static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryNewDeoptimizer",
-                        chunk->area_start() +
-                        rai_new_deoptimizer_bary_offset);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryNewDeoptimizer",
-                        chunk->area_start() +
-                        rai_new_deoptimizer);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryComputeOutputFrames",
-                        chunk->area_start() +
-                        rai_compute_output_frames_bary_offset);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryComputeOutputFrames",
-                        chunk->area_start() +
-                        rai_compute_output_frames);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryNewDeoptimizer",
+                            (void*)(chunk->area_start() +
+                                    rai_new_deoptimizer_bary_offset));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryNewDeoptimizer",
+                            (void*)(chunk->area_start() +
+                                    rai_new_deoptimizer));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryComputeOutputFrames",
+                            (void*)(chunk->area_start() +
+                                    rai_compute_output_frames_bary_offset));
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryComputeOutputFrames",
+                            (void*)(chunk->area_start() +
+                                    rai_compute_output_frames));
   data->deopt_entry_code_entries_[type] = entry_count;
 }
 

@@ -22,9 +22,6 @@
 #include "src/heap-profiler.h"
 #include "src/ic/ic.h"
 #include "src/ic/stub-cache.h"
-#include <rock.h>
-
-extern "C" void *code_heap;
 
 namespace v8 {
 namespace internal {
@@ -2957,7 +2954,7 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
                        SlotsBuffer::RELOCATED_CODE_OBJECT, dst_addr,
                        SlotsBuffer::IGNORE_OVERFLOW);
     Code::cast(dst)->Relocate(dst_addr - src_addr);
-    rock_move_code(code_heap, dst_addr, src_addr, size);
+    isolate()->code_range()->RockMoveCode(dst_addr, src_addr, size);
   } else {
     DCHECK(dest == OLD_DATA_SPACE || dest == NEW_SPACE);
     heap()->MoveBlock(dst_addr, src_addr, size);

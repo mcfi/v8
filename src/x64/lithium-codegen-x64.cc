@@ -14,10 +14,7 @@
 #include "src/ic/stub-cache.h"
 #include "src/x64/lithium-codegen-x64.h"
 
-#include <rock.h>
 #include <vector>
-
-extern "C" void *code_heap;
 
 namespace v8 {
 namespace internal {
@@ -75,10 +72,12 @@ void LCodeGen::FinishCode(Handle<Code> code) {
   if (code->is_optimized_code()) RegisterWeakObjectsInOptimizedCode(code);
   PopulateDeoptimizationData(code);
   for (size_t i = 0; i < masm()->CEC.size(); i++) {
-    rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM, masm()->CEC[i].name,
-                          code->instruction_start() + masm()->CEC[i].bary_offset);
-    rock_reg_cfg_metadata(code_heap, ROCK_RAI, masm()->CEC[i].name,
-                          code->instruction_start() + masm()->CEC[i].rai);
+    isolate()->code_range()->
+      RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm()->CEC[i].name,
+                              (void*)(code->instruction_start() + masm()->CEC[i].bary_offset));
+    isolate()->code_range()->
+      RockRegisterCFGMetaData(ROCK_RAI, masm()->CEC[i].name,
+                              (void*)(code->instruction_start() + masm()->CEC[i].rai));
   }
 }
 

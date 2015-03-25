@@ -12,8 +12,6 @@
 #include "src/msan.h"
 #include <rock.h>
 
-extern "C" void *code_heap;
-
 namespace v8 {
 namespace internal {
 
@@ -89,7 +87,7 @@ bool HeapObjectIterator::AdvanceToNextPage() {
 
 // -----------------------------------------------------------------------------
 // CodeRange
-
+void *CodeRange::code_heap = 0;
 
 CodeRange::CodeRange(Isolate* isolate)
     : isolate_(isolate),
@@ -133,6 +131,7 @@ bool CodeRange::SetUp(size_t requested) {
   size_t size = code_range_->size() - (aligned_base - base);
   allocation_list_.Add(FreeBlock(aligned_base, size));
   current_allocation_block_index_ = 0;
+  rock_create_code_heap(&code_heap, 0);
   return true;
 }
 
@@ -2225,7 +2224,7 @@ int FreeList::Free(Address start, int size_in_bytes) {
 
   DCHECK(IsVeryLong() || available() == SumFreeLists());
   if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
-    rock_delete_code(code_heap, start, size_in_bytes);
+    heap_->isolate()->code_range()->RockDelCode(start, size_in_bytes);
   }
   return 0;
 }

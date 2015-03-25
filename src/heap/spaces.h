@@ -13,6 +13,7 @@
 #include "src/list.h"
 #include "src/log.h"
 #include "src/utils.h"
+#include <rock.h>
 
 namespace v8 {
 namespace internal {
@@ -903,14 +904,26 @@ class CodeRange {
   bool InCodeRange(const Address addr, const size_t size) {
     return (NULL != shadow_code_) &&
       (addr >= (Address)code_range_->address()) &&
-      (addr + size) <= (Address)code_range_->address() + code_range_->size();
+      (addr + size) < (Address)code_range_->address() + code_range_->size();
+  }
+
+  void RockRegisterCFGMetaData(int type, const void* md, const void* extra) {
+    rock_reg_cfg_metadata(code_heap, type, md, extra);
+  }
+
+  void RockMoveCode(void *dst, void* src, size_t sz) {
+    rock_move_code(code_heap, dst, src, sz);
+  }
+
+  void RockDelCode(void *addr, size_t sz) {
+    rock_delete_code(code_heap, addr, sz);
   }
  private:
   Isolate* isolate_;
 
   // The reserved range of virtual memory that all code objects are put in.
   base::VirtualMemory* code_range_;
-
+  static void* code_heap;
   // Shadow code heap
   void* shadow_code_;
   // Plain old data class, just a struct plus a constructor.

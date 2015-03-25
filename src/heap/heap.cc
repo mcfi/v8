@@ -32,7 +32,6 @@
 #include "src/utils.h"
 #include "src/v8threads.h"
 #include "src/vm-state-inl.h"
-#include <rock.h>
 #if V8_TARGET_ARCH_ARM && !V8_INTERPRETED_REGEXP
 #include "src/regexp-macro-assembler.h"          // NOLINT
 #include "src/arm/regexp-macro-assembler-arm.h"  // NOLINT
@@ -45,7 +44,7 @@
 #include "src/regexp-macro-assembler.h"
 #include "src/mips64/regexp-macro-assembler-mips64.h"
 #endif
-extern "C" void *code_heap;
+
 namespace v8 {
 namespace internal {
 
@@ -2705,18 +2704,20 @@ Object* dummy_JSEntryStub(byte* entry,
 void Heap::CreateJSEntryStub() {
   JSEntryStub stub(isolate(), StackFrame::ENTRY);
   set_js_entry_code(*stub.GetCode());
-  rock_reg_cfg_metadata(code_heap, ROCK_FUNC_SYM,
-                        (*stub.GetCode())->entry(),
-                        (const void*)dummy_JSEntryStub);
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_FUNC_SYM,
+                            (*stub.GetCode())->entry(),
+                            (void*)dummy_JSEntryStub);
 }
 
 
 void Heap::CreateJSConstructEntryStub() {
   JSEntryStub stub(isolate(), StackFrame::ENTRY_CONSTRUCT);
   set_js_construct_entry_code(*stub.GetCode());
-  rock_reg_cfg_metadata(code_heap, ROCK_FUNC_SYM,
-                        (*stub.GetCode())->entry(),
-                        (const void*)dummy_JSEntryStub);
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_FUNC_SYM,
+                            (*stub.GetCode())->entry(),
+                            (void*)dummy_JSEntryStub);
 }
    
 void Heap::CreateFixedStubs() {

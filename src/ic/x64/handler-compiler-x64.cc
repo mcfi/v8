@@ -10,10 +10,6 @@
 #include "src/ic/handler-compiler.h"
 #include "src/ic/ic.h"
 
-#include <rock.h>
-
-extern "C" void *code_heap;
-
 namespace v8 {
 namespace internal {
 
@@ -670,18 +666,22 @@ void NamedLoadHandlerCompiler::GenerateLoadCallback(
 
   CallApiGetterStub stub(isolate());
 
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryCallApiGetterStub",
-                        (*stub.GetCode())->instruction_start() + 137);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryCallApiGetterStub",
-                        (*stub.GetCode())->instruction_start() + 152);
-  rock_reg_cfg_metadata(code_heap, ROCK_ICJ_SYM,
-                        "V8CEntryHandleScopeDeleteExtensions",
-                        (*stub.GetCode())->instruction_start() + 324);
-  rock_reg_cfg_metadata(code_heap, ROCK_RAI,
-                        "V8CEntryHandleScopeDeleteExtensions",
-                        (*stub.GetCode())->instruction_start() + 336);
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryCallApiGetterStub",
+                            (void*)((*stub.GetCode())->instruction_start() + 137));
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryCallApiGetterStub",
+                            (void*)((*stub.GetCode())->instruction_start() + 152));
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
+                            "V8CEntryHandleScopeDeleteExtensions",
+                            (void*)((*stub.GetCode())->instruction_start() + 324));
+  isolate()->code_range()->
+    RockRegisterCFGMetaData(ROCK_RAI,
+                            "V8CEntryHandleScopeDeleteExtensions",
+                            (void*)((*stub.GetCode())->instruction_start() + 336));
   __ TailCallStub(&stub);
 }
 
