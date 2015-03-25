@@ -2886,7 +2886,8 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
                                          int size, AllocationSpace dest) {
   Address dst_addr = dst->address();
   Address src_addr = src->address();
-  ptrdiff_t diff = 0;
+  bool IsCodeObj = false;
+
   DCHECK(heap()->AllowedToBeMigrated(src, dest));
   DCHECK(dest != LO_SPACE && size <= Page::kMaxRegularHeapObjectSize);
   if (dest == OLD_POINTER_SPACE) {
@@ -2894,13 +2895,16 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     Address dst_slot = dst_addr;
     DCHECK(IsAligned(size, kPointerSize));
 
-    diff = 0;
     if (heap()->isolate()->code_range()->InCodeRange(dst_slot, size))
-      diff = heap()->isolate()->code_range()->Offset();
+      IsCodeObj = true;
+
     for (int remaining = size / kPointerSize; remaining > 0; remaining--) {
       Object* value = Memory::Object_at(src_slot);
 
-      Memory::Object_at(dst_slot+diff) = value;
+      if (IsCodeObj) {
+        isolate()->code_range()->RockFillData(dst_slot, &value, sizeof(Object*));
+      } else
+        Memory::Object_at(dst_slot) = value;
 
       if (!src->MayContainRawValues()) {
         RecordMigratedSlot(value, dst_slot);
@@ -2946,10 +2950,9 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     }
   } else if (dest == CODE_SPACE) {
     PROFILE(isolate(), CodeMoveEvent(src_addr, dst_addr));
-    diff = 0;
-    if (heap()->isolate()->code_range()->InCodeRange(dst_addr, size))
-      diff = heap()->isolate()->code_range()->Offset();
-    heap()->MoveBlock(dst_addr+diff, src_addr, size);
+    DCHECK(heap()->isolate()->code_range()->InCodeRange(dst_addr, size));
+    //heap()->MoveBlock(dst_addr+diff, src_addr, size);
+    isolate()->code_range()->RockFillCode(dst_addr, src_addr, size);
     SlotsBuffer::AddTo(&slots_buffer_allocator_, &migration_slots_buffer_,
                        SlotsBuffer::RELOCATED_CODE_OBJECT, dst_addr,
                        SlotsBuffer::IGNORE_OVERFLOW);
@@ -2960,10 +2963,10 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     heap()->MoveBlock(dst_addr, src_addr, size);
   }
   heap()->OnMoveEvent(dst, src, size);
-  diff = 0;
-  if (heap()->isolate()->code_range()->InCodeRange(src_addr, size))
-    diff = heap()->isolate()->code_range()->Offset();
-  Memory::Address_at(src_addr+diff) = dst_addr;
+  if (heap()->isolate()->code_range()->InCodeRange(src_addr, size)) {
+    isolate()->code_range()->RockFillData(src_addr, &dst_addr, sizeof(dst_addr));
+  } else
+    Memory::Address_at(src_addr) = dst_addr;
 }
 
 
@@ -3040,11 +3043,10 @@ class PointersUpdatingVisitor : public ObjectVisitor {
       DCHECK(heap->InFromSpace(heap_obj) ||
              MarkCompactCollector::IsOnEvacuationCandidate(heap_obj));
       HeapObject* target = map_word.ToForwardingAddress();
-      ptrdiff_t diff = 0;
       if (heap->isolate()->code_range()->InCodeRange((Address)slot, kPointerSize)){
-        diff = heap->isolate()->code_range()->Offset();
-      }
-      *(Object**)((Address)slot+diff) = target;
+        heap->isolate()->code_range()->RockFillData(slot, &target, sizeof(Object*));
+      } else
+        *(Object**)((Address)slot) = target;
       DCHECK(!heap->InFromSpace(target) &&
              !MarkCompactCollector::IsOnEvacuationCandidate(target));
     }
@@ -3349,9 +3351,12 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
       if (free_end != free_start) {
         int size = static_cast<int>(free_end - free_start);
         if (free_space_mode == ZAP_FREE_SPACE) {
-          if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size))
-            memset(free_start+p->heap()->isolate()->code_range()->Offset(), 0xcc, size);
-          else
+          if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
+            void *cc = malloc(size);
+            memset(cc, 0xcc, size);
+            p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size);
+            free(cc);
+          } else
             memset(free_start, 0xcc, size);
         }
         freed_bytes = Free<parallelism>(space, free_list, free_start, size);
@@ -3386,9 +3391,12 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
   if (free_start != p->area_end()) {
     int size = static_cast<int>(p->area_end() - free_start);
     if (free_space_mode == ZAP_FREE_SPACE) {
-      if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size))
-        memset(free_start+p->heap()->isolate()->code_range()->Offset(), 0xcc, size);
-      else
+      if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
+        void *cc = malloc(size);
+        memset(cc, 0xcc, size);
+        p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size);
+        free(cc);
+      } else
         memset(free_start, 0xcc, size);
     }
     freed_bytes = Free<parallelism>(space, free_list, free_start, size);

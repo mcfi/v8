@@ -10122,8 +10122,9 @@ void Code::CopyFrom(const CodeDesc& desc) {
   DCHECK(Marking::Color(this) == Marking::WHITE_OBJECT);
 
   // copy code
-  CopyBytes((Address)instruction_start()+this->GetIsolate()->code_range()->Offset(), desc.buffer,
-            static_cast<size_t>(desc.instr_size));
+  GetIsolate()->code_range()->
+    RockFillData(instruction_start(),
+                 desc.buffer, static_cast<size_t>(desc.instr_size));
 
   // copy reloc info
   CopyBytes((Address)relocation_start(),
@@ -10174,8 +10175,7 @@ void Code::CopyFrom(const CodeDesc& desc) {
       it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate()->code_range()->Offset());
     }
   }
-  CpuFeatures::FlushICache(instruction_start() + this->GetIsolate()->code_range()->Offset(),
-                           instruction_size());
+  CpuFeatures::FlushICache(instruction_start(), instruction_size());
 }
 
 

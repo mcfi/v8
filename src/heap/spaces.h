@@ -773,7 +773,8 @@ class Page : public MemoryChunk {
 #define FRAGMENTATION_STATS_ACCESSORS(type, name) \
   type name() { return name##_; }                 \
   void set_##name(type name) { name##_ = name; }  \
-  void add_##name(type name) { name##_ += name; }
+  void add_##name(type name) { name##_ += name; } \
+  type* p_##name() { return &name##_; }
 
   FRAGMENTATION_STATS_ACCESSORS(intptr_t, non_available_small_blocks)
   FRAGMENTATION_STATS_ACCESSORS(intptr_t, available_in_small_free_list)

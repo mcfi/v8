@@ -756,8 +756,9 @@ void MemoryAllocator::ZapBlock(Address start, size_t size) {
       Memory::Address_at(start + s) = kZapValue;
     }
   } else {
+    Address v = kZapValue;
     for (size_t s = 0; s + kPointerSize <= size; s += kPointerSize) {
-      Memory::Address_at(start + s + isolate_->code_range()->Offset()) = kZapValue;
+      isolate_->code_range()->RockFillData(start + s, &v, sizeof(Address));
     }
   }
 }
@@ -2028,18 +2029,25 @@ void FreeListNode::set_next(FreeListNode* next) {
   // While we are booting the VM the free space map will actually be null.  So
   // we have to make sure that we don't try to use it for anything at that
   // stage.
-  ptrdiff_t diff = 0;
-  if (this->GetIsolate()->code_range()->InCodeRange(address(), 16))
-    diff = this->GetIsolate()->code_range()->Offset();
   if (map() == GetHeap()->raw_unchecked_free_space_map()) {
     DCHECK(map() == NULL || Size() >= kNextOffset + kPointerSize);
 
-    base::NoBarrier_Store(
-        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kNextOffset) + diff),
+    if (this->GetIsolate()->code_range()->InCodeRange(address() + kNextOffset,
+                                                      sizeof(base::AtomicWord))) {
+      this->GetIsolate()->code_range()->
+        RockFillData(address() + kNextOffset, &next, sizeof(base::AtomicWord));
+    } else
+      base::NoBarrier_Store(
+        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kNextOffset)),
         reinterpret_cast<base::AtomicWord>(next));
   } else {
-    base::NoBarrier_Store(
-        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kPointerSize) + diff),
+    if (this->GetIsolate()->code_range()->InCodeRange(address() + kPointerSize,
+                                                      sizeof(base::AtomicWord))) {
+      this->GetIsolate()->code_range()->
+        RockFillData(address() + kPointerSize, &next, sizeof(base::AtomicWord));
+    } else
+      base::NoBarrier_Store(
+        reinterpret_cast<base::AtomicWord*>(intptr_t(address() + kPointerSize)),
         reinterpret_cast<base::AtomicWord>(next));
   }
 }
@@ -2233,17 +2241,18 @@ int FreeList::Free(Address start, int size_in_bytes) {
 FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
   FreeListNode* node = NULL;
   Page* page = NULL;
-  ptrdiff_t diff = heap_->isolate()->code_range()->Offset();
 
   if (size_in_bytes <= kSmallAllocationMax) {
     node = small_list_.PickNodeFromList(node_size);
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_small_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_small_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_small_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_small_free_list(-(*node_size));
       DCHECK(IsVeryLong() || available() == SumFreeLists());
       return node;
@@ -2255,10 +2264,12 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_medium_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_medium_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_medium_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_medium_free_list(-(*node_size));
       DCHECK(IsVeryLong() || available() == SumFreeLists());
       return node;
@@ -2270,10 +2281,12 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_large_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_large_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_large_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_large_free_list(-(*node_size));
       DCHECK(IsVeryLong() || available() == SumFreeLists());
       return node;
@@ -2291,16 +2304,20 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
       int size = reinterpret_cast<FreeSpace*>(cur_node)->Size();
       huge_list_available -= size;
       page = Page::FromAddress(cur_node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->add_available_in_huge_free_list(-size);
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_huge_free_list();
+        rs += -size;
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_huge_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_huge_free_list(-size);
       cur_node = cur_node->next();
     }
     //fprintf(stderr, "cur = %p\n", cur_node);
-    if (heap_->isolate()->code_range()->InCodeRange((Address)cur, 0))
-      *reinterpret_cast<FreeListNode**>((Address)cur + diff) = cur_node;
-    else
+    if (heap_->isolate()->code_range()->InCodeRange((Address)cur, 0)) {
+      heap_->isolate()->code_range()->
+        RockFillData(cur, &cur_node, sizeof(FreeListNode*));
+    } else
       *cur = cur_node;
     if (cur_node == NULL) {
       huge_list_.set_end(NULL);
@@ -2313,16 +2330,21 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (size >= size_in_bytes) {
       // Large enough node found.  Unlink it from the list.
       node = *cur;
-      if (heap_->isolate()->code_range()->InCodeRange((Address)cur, 0))
-        *reinterpret_cast<FreeListNode**>((Address)cur + diff) = node->next();
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)cur, 0)) {
+        FreeListNode* n = node->next();
+        heap_->isolate()->code_range()->
+          RockFillData(cur, &n, sizeof(FreeListNode*));
+      } else
         *cur = node->next();
       *node_size = size;
       huge_list_available -= size;
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->add_available_in_huge_free_list(-size);
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_huge_free_list();
+        rs += -size;
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_huge_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_huge_free_list(-size);
       break;
     }
@@ -2344,10 +2366,12 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_small_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_small_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_small_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_small_free_list(-(*node_size));
     }
   } else if (size_in_bytes <= kMediumListMax) {
@@ -2355,10 +2379,12 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_medium_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_medium_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_medium_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_medium_free_list(-(*node_size));
     }
   } else if (size_in_bytes <= kLargeListMax) {
@@ -2366,10 +2392,12 @@ FreeListNode* FreeList::FindNodeFor(int size_in_bytes, int* node_size) {
     if (node != NULL) {
       DCHECK(size_in_bytes <= *node_size);
       page = Page::FromAddress(node->address());
-      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0))
-        reinterpret_cast<Page*>((Address)page + diff)->
-          add_available_in_large_free_list(-(*node_size));
-      else
+      if (heap_->isolate()->code_range()->InCodeRange((Address)page, 0)) {
+        intptr_t rs = page->available_in_large_free_list();
+        rs += -(*node_size);
+        heap_->isolate()->code_range()->
+          RockFillData(page->p_available_in_large_free_list(), &rs, sizeof(intptr_t));
+      } else
         page->add_available_in_large_free_list(-(*node_size));
     }
   }
@@ -2937,12 +2965,18 @@ AllocationResult LargeObjectSpace::AllocateRaw(int object_size,
   if (Heap::ShouldZapGarbage()) {
     // Make the object consistent so the heap can be verified in OldSpaceStep.
     // We only need to do this in debug builds or if verify_heap is on.
-    ptrdiff_t diff = 0;
-    if (heap()->isolate()->code_range()->InCodeRange(object->address(), 16))
-      diff = heap()->isolate()->code_range()->Offset();
-    reinterpret_cast<Object**>(object->address() + diff)[0] =
+    if (heap()->isolate()->code_range()->InCodeRange(object->address(), 16)) {
+      Object *o = heap()->fixed_array_map();
+      heap()->isolate()->code_range()->
+        RockFillData(object->address(), &o, sizeof(Object*));
+      o = Smi::FromInt(0);
+      heap()->isolate()->code_range()->
+        RockFillData(object->address(), &o, sizeof(Object*));
+    } else {
+      reinterpret_cast<Object**>(object->address())[0] =
         heap()->fixed_array_map();
-    reinterpret_cast<Object**>(object->address() + diff)[1] = Smi::FromInt(0);
+      reinterpret_cast<Object**>(object->address())[1] = Smi::FromInt(0);
+    }
   }
 
   heap()->incremental_marking()->OldSpaceStep(object_size);
