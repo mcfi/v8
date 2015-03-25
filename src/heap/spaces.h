@@ -918,6 +918,15 @@ class CodeRange {
   void RockDelCode(void *addr, size_t sz) {
     rock_delete_code(code_heap, addr, sz);
   }
+
+  void RockFillData(void *dst, void *src, size_t len) {
+    rock_code_heap_fill(code_heap, dst, src, len, (void*)0);
+  }
+
+  void RockFillCode(void *dst, void *src, size_t len) {
+    rock_code_heap_fill(code_heap, dst, src, len, (void*)1);
+  }
+
  private:
   Isolate* isolate_;
 
