@@ -670,7 +670,7 @@ class ToBooleanIC : public IC {
 
 // Helper for BinaryOpIC and CompareIC.
 enum InlinedSmiCheck { ENABLE_INLINED_SMI_CHECK, DISABLE_INLINED_SMI_CHECK };
-void PatchInlinedSmiCode(Address address, InlinedSmiCheck check, ptrdiff_t diff);
+void PatchInlinedSmiCode(Address address, InlinedSmiCheck check, Isolate* isolate);
 
 DECLARE_RUNTIME_FUNCTION(KeyedLoadIC_MissFromStubFailure);
 DECLARE_RUNTIME_FUNCTION(KeyedStoreIC_MissFromStubFailure);

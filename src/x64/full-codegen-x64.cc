@@ -4859,18 +4859,18 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
                             BackEdgeState target_state,
                             Code* replacement_code) {
   Address call_target_address = pc - kIntSize;
-  ptrdiff_t diff = unoptimized_code->GetIsolate()->code_range()->Offset();
-  Address jns_instr_address = call_target_address - 3 + diff;
-  Address jns_offset_address = call_target_address - 2 + diff;
-
+  Address jns_instr_address = call_target_address - 3;
+  byte patch[2];
   switch (target_state) {
     case INTERRUPT:
       //     sub <profiling_counter>, <delta>  ;; Not changed
       //     jns ok
       //     call <interrupt stub>
       //   ok:
-      *jns_instr_address = kJnsInstruction;
-      *jns_offset_address = kJnsOffset;
+      patch[0] = kJnsInstruction;
+      patch[1] = kJnsOffset;
+      unoptimized_code->GetIsolate()->code_range()->
+        RockFillCode(jns_instr_address, patch, 2);
       break;
     case ON_STACK_REPLACEMENT:
     case OSR_AFTER_STACK_CHECK:
@@ -4879,16 +4879,17 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
       //     nop
       //     call <on-stack replacment>
       //   ok:
-      *jns_instr_address = kNopByteOne;
-      *jns_offset_address = kNopByteTwo;
+      patch[0] = kNopByteOne;
+      patch[1] = kNopByteTwo;
+      unoptimized_code->GetIsolate()->code_range()->
+        RockFillCode(jns_instr_address, patch, 2);
       break;
   }
 
   Assembler::set_target_address_at(call_target_address,
                                    unoptimized_code,
                                    replacement_code->entry(),
-                                   FLUSH_ICACHE_IF_NEEDED,
-                                   diff);
+                                   FLUSH_ICACHE_IF_NEEDED);
   unoptimized_code->GetHeap()->incremental_marking()->RecordCodeTargetPatch(
       unoptimized_code, call_target_address, replacement_code);
 }

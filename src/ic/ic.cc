@@ -470,7 +470,7 @@ void IC::InvalidateMaps(Code* stub) {
         it.rinfo()->target_object()->IsMap()) {
       it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER,
                                     FLUSH_ICACHE_IF_NEEDED,
-                                    stub->GetIsolate()->code_range()->Offset());
+                                    stub->GetIsolate());
     }
   }
   CpuFeatures::FlushICache(stub->instruction_start(), stub->instruction_size());
@@ -562,8 +562,7 @@ void CompareIC::Clear(Isolate* isolate, Address address, Code* target,
   if (stub.state() != CompareICState::KNOWN_OBJECT) return;
   SetTargetAtAddress(address, GetRawUninitialized(isolate, stub.op()),
                      constant_pool);
-  PatchInlinedSmiCode(address, DISABLE_INLINED_SMI_CHECK,
-                      target->GetIsolate()->code_range()->Offset());
+  PatchInlinedSmiCode(address, DISABLE_INLINED_SMI_CHECK, target->GetIsolate());
 }
 
 
@@ -2276,11 +2275,9 @@ MaybeHandle<Object> BinaryOpIC::Transition(
 
   // Patch the inlined smi code as necessary.
   if (!old_state.UseInlinedSmiCode() && state.UseInlinedSmiCode()) {
-    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK,
-                        isolate()->code_range()->Offset());
+    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK, isolate());
   } else if (old_state.UseInlinedSmiCode() && !state.UseInlinedSmiCode()) {
-    PatchInlinedSmiCode(address(), DISABLE_INLINED_SMI_CHECK,
-                        isolate()->code_range()->Offset());
+    PatchInlinedSmiCode(address(), DISABLE_INLINED_SMI_CHECK, isolate());
   }
 
   return result;
@@ -2370,8 +2367,7 @@ Code* CompareIC::UpdateCaches(Handle<Object> x, Handle<Object> y) {
 
   // Activate inlined smi code.
   if (old_stub.state() == CompareICState::UNINITIALIZED) {
-    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK,
-                        isolate()->code_range()->Offset());
+    PatchInlinedSmiCode(address(), ENABLE_INLINED_SMI_CHECK, isolate());
   }
 
   return *new_target;

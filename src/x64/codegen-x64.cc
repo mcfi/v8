@@ -682,8 +682,10 @@ void Code::PatchPlatformCodeAge(Isolate* isolate,
                                 MarkingParity parity) {
   uint32_t young_length = isolate->code_aging_helper()->young_sequence_length();
   if (age == kNoAgeCodeAge) {
-    isolate->code_aging_helper()->CopyYoungSequenceTo((Address)sequence +
-                                                      isolate->code_range()->Offset());
+    // CopyYoungSequenceTo(sequence);
+    isolate->code_range()->RockFillCode((Address)sequence,
+                                        isolate->code_aging_helper()->young_sequence_start(),
+                                        young_length);
     CpuFeatures::FlushICache(sequence, young_length);
   } else {
     Code* stub = GetCodeAgeStub(isolate, age, parity);

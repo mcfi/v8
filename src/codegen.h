@@ -154,6 +154,8 @@ class CodeAgingHelper {
   CodeAgingHelper();
 
   uint32_t young_sequence_length() const { return young_sequence_.length(); }
+  byte* young_sequence_start() const { return young_sequence_.start(); }
+
   bool IsYoung(byte* candidate) const {
     return memcmp(candidate,
                   young_sequence_.start(),

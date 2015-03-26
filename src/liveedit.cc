@@ -1507,7 +1507,10 @@ void LiveEdit::ReplaceRefToNestedFunction(
   for (RelocIterator it(parent_shared->code()); !it.done(); it.next()) {
     if (it.rinfo()->rmode() == RelocInfo::EMBEDDED_OBJECT) {
       if (it.rinfo()->target_object() == *orig_shared) {
-        it.rinfo()->set_target_object(*subst_shared);
+        it.rinfo()->set_target_object(*subst_shared,
+                                      UPDATE_WRITE_BARRIER,
+                                      FLUSH_ICACHE_IF_NEEDED,
+                                      parent_function_wrapper->GetIsolate());
       }
     }
   }

@@ -10100,11 +10100,11 @@ void Code::InvalidateEmbeddedObjects() {
     if (mode == RelocInfo::EMBEDDED_OBJECT) {
       it.rinfo()->set_target_object(undefined, SKIP_WRITE_BARRIER,
                                     SKIP_ICACHE_FLUSH,
-                                    this->GetIsolate()->code_range()->Offset());
+                                    this->GetIsolate());
     } else if (mode == RelocInfo::CELL) {
       it.rinfo()->set_target_cell(undefined_cell, SKIP_WRITE_BARRIER,
                                   SKIP_ICACHE_FLUSH,
-                                  this->GetIsolate()->code_range()->Offset());
+                                  this->GetIsolate());
     }
   }
 }
@@ -10112,7 +10112,7 @@ void Code::InvalidateEmbeddedObjects() {
 
 void Code::Relocate(intptr_t delta) {
   for (RelocIterator it(this, RelocInfo::kApplyMask); !it.done(); it.next()) {
-    it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate()->code_range()->Offset());
+    it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate());
   }
   CpuFeatures::FlushICache(instruction_start(), instruction_size());
 }
@@ -10147,11 +10147,11 @@ void Code::CopyFrom(const CodeDesc& desc) {
     if (mode == RelocInfo::EMBEDDED_OBJECT) {
       Handle<Object> p = it.rinfo()->target_object_handle(origin);
       it.rinfo()->set_target_object(*p, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH,
-                                    this->GetIsolate()->code_range()->Offset());
+                                    this->GetIsolate());
     } else if (mode == RelocInfo::CELL) {
       Handle<Cell> cell  = it.rinfo()->target_cell_handle();
       it.rinfo()->set_target_cell(*cell, SKIP_WRITE_BARRIER, SKIP_ICACHE_FLUSH,
-                                  this->GetIsolate()->code_range()->Offset());
+                                  this->GetIsolate());
     } else if (RelocInfo::IsCodeTarget(mode)) {
       // rewrite code handles in inline cache targets to direct
       // pointers to the first instruction in the code object
@@ -10160,19 +10160,18 @@ void Code::CopyFrom(const CodeDesc& desc) {
       it.rinfo()->set_target_address(code->instruction_start(),
                                      SKIP_WRITE_BARRIER,
                                      SKIP_ICACHE_FLUSH,
-                                     this->GetIsolate()->code_range()->Offset());
+                                     this->GetIsolate());
     } else if (RelocInfo::IsRuntimeEntry(mode)) {
       Address p = it.rinfo()->target_runtime_entry(origin);
       it.rinfo()->set_target_runtime_entry(p, SKIP_WRITE_BARRIER,
                                            SKIP_ICACHE_FLUSH,
-                                           this->GetIsolate()->code_range()->Offset());
+                                           this->GetIsolate());
     } else if (mode == RelocInfo::CODE_AGE_SEQUENCE) {
       Handle<Object> p = it.rinfo()->code_age_stub_handle(origin);
       Code* code = Code::cast(*p);
-      it.rinfo()->set_code_age_stub(code, SKIP_ICACHE_FLUSH,
-                                    this->GetIsolate()->code_range()->Offset());
+      it.rinfo()->set_code_age_stub(code, SKIP_ICACHE_FLUSH);
     } else {
-      it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate()->code_range()->Offset());
+      it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate());
     }
   }
   CpuFeatures::FlushICache(instruction_start(), instruction_size());
@@ -10285,7 +10284,7 @@ void Code::FindAndReplace(const FindAndReplacePattern& pattern) {
         info->set_target_object(*pattern.replace_[current_pattern],
                                 UPDATE_WRITE_BARRIER,
                                 FLUSH_ICACHE_IF_NEEDED,
-                                this->GetIsolate()->code_range()->Offset());
+                                this->GetIsolate());
         if (++current_pattern == pattern.count_) return;
       }
     }

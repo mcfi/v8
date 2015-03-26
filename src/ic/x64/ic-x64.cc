@@ -949,7 +949,7 @@ bool CompareIC::HasInlinedSmiCode(Address address) {
 
 
 void PatchInlinedSmiCode(Address address, InlinedSmiCheck check,
-                           ptrdiff_t diff) {
+                         Isolate* isolate) {
   // The address of the instruction following the call.
   Address test_instruction_address =
       address + Assembler::kCallTargetAddressOffset;
@@ -983,7 +983,8 @@ void PatchInlinedSmiCode(Address address, InlinedSmiCheck check,
       (check == ENABLE_INLINED_SMI_CHECK)
           ? (*jmp_address == Assembler::kJncShortOpcode ? not_zero : zero)
           : (*jmp_address == Assembler::kJnzShortOpcode ? not_carry : carry);
-  *(jmp_address+diff) = static_cast<byte>(Assembler::kJccShortPrefix | cc);
+  byte b = static_cast<byte>(Assembler::kJccShortPrefix | cc);
+  isolate->code_range()->RockFillCode(jmp_address, &b, sizeof(byte));
 }
 }
 }  // namespace v8::internal

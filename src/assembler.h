@@ -486,7 +486,7 @@ class RelocInfo {
   INLINE(void apply(intptr_t delta,
                     ICacheFlushMode icache_flush_mode =
                     FLUSH_ICACHE_IF_NEEDED,
-                    ptrdiff_t diff = 0));
+                    Isolate *isolate = 0));
 
   // Is the pointer this relocation info refers to coded like a plain pointer
   // or is it strange in some way (e.g. relative or patched into a series of
@@ -506,7 +506,7 @@ class RelocInfo {
                                      UPDATE_WRITE_BARRIER,
                                  ICacheFlushMode icache_flush_mode =
                                      FLUSH_ICACHE_IF_NEEDED,
-                                 ptrdiff_t diff = 0));
+                                 Isolate *isolate = 0));
   INLINE(Object* target_object());
   INLINE(Handle<Object> target_object_handle(Assembler* origin));
   INLINE(void set_target_object(Object* target,
@@ -514,14 +514,14 @@ class RelocInfo {
                                     UPDATE_WRITE_BARRIER,
                                 ICacheFlushMode icache_flush_mode =
                                     FLUSH_ICACHE_IF_NEEDED,
-                                ptrdiff_t diff = 0));
+                                Isolate *isolate = 0));
   INLINE(Address target_runtime_entry(Assembler* origin));
   INLINE(void set_target_runtime_entry(Address target,
                                        WriteBarrierMode write_barrier_mode =
                                            UPDATE_WRITE_BARRIER,
                                        ICacheFlushMode icache_flush_mode =
                                            FLUSH_ICACHE_IF_NEEDED,
-                                       ptrdiff_t diff = 0));
+                                       Isolate *isolate = 0));
   INLINE(Cell* target_cell());
   INLINE(Handle<Cell> target_cell_handle());
   INLINE(void set_target_cell(Cell* cell,
@@ -529,13 +529,12 @@ class RelocInfo {
                                   UPDATE_WRITE_BARRIER,
                               ICacheFlushMode icache_flush_mode =
                                   FLUSH_ICACHE_IF_NEEDED,
-                              ptrdiff_t diff = 0));
+                              Isolate *isolate = 0));
   INLINE(Handle<Object> code_age_stub_handle(Assembler* origin));
   INLINE(Code* code_age_stub());
   INLINE(void set_code_age_stub(Code* stub,
                                 ICacheFlushMode icache_flush_mode =
-                                   FLUSH_ICACHE_IF_NEEDED,
-                                ptrdiff_t diff = 0));
+                                   FLUSH_ICACHE_IF_NEEDED));
 
   // Returns the address of the constant pool entry where the target address
   // is held.  This should only be called if IsInConstantPool returns true.

@@ -2822,8 +2822,8 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   chunk->CommitArea(desc.instr_size);
   // TODO: here the deoptimization table entries are dynamically swapped,
   //       which is essentially a process of dynamic code uninstallation/installation.
-  CopyBytes(chunk->area_start() + isolate->code_range()->Offset(), desc.buffer,
-      static_cast<size_t>(desc.instr_size));
+  isolate->code_range()->
+    RockFillCode(chunk->area_start(), desc.buffer, static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
   isolate->code_range()->
