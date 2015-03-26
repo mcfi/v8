@@ -4889,7 +4889,8 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
   Assembler::set_target_address_at(call_target_address,
                                    unoptimized_code,
                                    replacement_code->entry(),
-                                   FLUSH_ICACHE_IF_NEEDED);
+                                   FLUSH_ICACHE_IF_NEEDED,
+                                   unoptimized_code->GetIsolate());
   unoptimized_code->GetHeap()->incremental_marking()->RecordCodeTargetPatch(
       unoptimized_code, call_target_address, replacement_code);
 }

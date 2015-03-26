@@ -898,34 +898,29 @@ class CodeRange {
   bool UncommitRawMemory(Address start, size_t length);
   void FreeRawMemory(Address buf, size_t length);
 
-  inline ptrdiff_t Offset() {
-    return (Address)shadow_code_ - (Address)code_range_->address();
-  }
-
   bool InCodeRange(const Address addr, const size_t size) {
-    return (NULL != shadow_code_) &&
-      (addr >= (Address)code_range_->address()) &&
+    return (addr >= (Address)code_range_->address()) &&
       (addr + size) < (Address)code_range_->address() + code_range_->size();
   }
 
   void RockRegisterCFGMetaData(int type, const void* md, const void* extra) {
-    rock_reg_cfg_metadata(code_heap, type, md, extra);
+    rock_reg_cfg_metadata(shadow_code_heap, type, md, extra);
   }
 
   void RockMoveCode(void *dst, void* src, size_t sz) {
-    rock_move_code(code_heap, dst, src, sz);
+    rock_move_code(shadow_code_heap, dst, src, sz);
   }
 
   void RockDelCode(void *addr, size_t sz) {
-    rock_delete_code(code_heap, addr, sz);
+    rock_delete_code(shadow_code_heap, addr, sz);
   }
 
   void RockFillData(void *dst, void *src, size_t len) {
-    rock_code_heap_fill(code_heap, dst, src, len, (void*)0);
+    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)0);
   }
 
   void RockFillCode(void *dst, void *src, size_t len) {
-    rock_code_heap_fill(code_heap, dst, src, len, (void*)1);
+    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)1);
   }
 
   static void SRockFillData(CodeRange* cr, void *dst, void *src, size_t len);
@@ -935,9 +930,8 @@ class CodeRange {
 
   // The reserved range of virtual memory that all code objects are put in.
   base::VirtualMemory* code_range_;
-  static void* code_heap;
   // Shadow code heap
-  void* shadow_code_;
+  void* shadow_code_heap;
   // Plain old data class, just a struct plus a constructor.
   class FreeBlock {
    public:

@@ -400,39 +400,7 @@ void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
 #endif
     return result;
   } else {
-    int code_heap_fd = shm_open("codeheap", O_RDWR | O_CREAT, 0744);
-    if (code_heap_fd == -1) {
-      fprintf(stderr, "shm_open failed\n");
-      return NULL;
-    }
-    if (0 != ftruncate(code_heap_fd, size)) {
-      fprintf(stderr, "ftruncate failed\n");
-      return NULL;
-    }
-    void* result = mmap(OS::GetRandomMmapAddr(),
-                        size,
-                        PROT_READ | PROT_EXEC,
-                        MAP_SHARED | MAP_NORESERVE,
-                        code_heap_fd,
-                        0);
-
-    if (result == MAP_FAILED) return NULL;
-    
-    *shadow_code_heap = mmap(OS::GetRandomMmapAddr(),
-                             size,
-                             PROT_READ | PROT_WRITE,
-                             MAP_SHARED | MAP_NORESERVE,
-                             code_heap_fd,
-                             0);
-    if (*shadow_code_heap == MAP_FAILED) {
-      munmap(result, size);
-      return NULL;
-    }
-
-    close(code_heap_fd);
-    shm_unlink("codeheap");
-    //fprintf(stderr, "%p, %p\n", result, *shadow_code_heap);
-    return result;
+    return rock_create_code_heap(shadow_code_heap, size);
   }
 }
 

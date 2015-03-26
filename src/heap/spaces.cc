@@ -87,12 +87,10 @@ bool HeapObjectIterator::AdvanceToNextPage() {
 
 // -----------------------------------------------------------------------------
 // CodeRange
-void *CodeRange::code_heap = 0;
-
 CodeRange::CodeRange(Isolate* isolate)
     : isolate_(isolate),
       code_range_(NULL),
-      shadow_code_(NULL),
+      shadow_code_heap(NULL),
       free_list_(0),
       allocation_list_(0),
       current_allocation_block_index_(0) {}
@@ -100,7 +98,7 @@ CodeRange::CodeRange(Isolate* isolate)
 
 bool CodeRange::SetUp(size_t requested) {
   DCHECK(code_range_ == NULL);
-  DCHECK(shadow_code_ == NULL);
+  DCHECK(shadow_code_heap == NULL);
   if (requested == 0) {
     // When a target requires the code range feature, we put all code objects
     // in a kMaximalCodeRangeSize range of virtual address space, so that
@@ -113,7 +111,7 @@ bool CodeRange::SetUp(size_t requested) {
   }
 
   DCHECK(!kRequiresCodeRange || requested <= kMaximalCodeRangeSize);
-  code_range_ = new base::VirtualMemory(requested, &shadow_code_);
+  code_range_ = new base::VirtualMemory(requested, &shadow_code_heap);
   CHECK(code_range_ != NULL);
   if (!code_range_->IsReserved()) {
     delete code_range_;
@@ -131,7 +129,6 @@ bool CodeRange::SetUp(size_t requested) {
   size_t size = code_range_->size() - (aligned_base - base);
   allocation_list_.Add(FreeBlock(aligned_base, size));
   current_allocation_block_index_ = 0;
-  rock_create_code_heap(&code_heap, 0);
   return true;
 }
 
@@ -230,10 +227,8 @@ bool CodeRange::CommitRawMemory(Address start, size_t length) {
 
 bool CodeRange::UncommitRawMemory(Address start, size_t length) {
   // update the CFG so that this region is unreachable
-  rock_delete_code(code_heap, start, length);
-  memset(start + Offset(), 0, length);
+  RockDelCode(start, length);
   return true;
-  //return code_range_->Uncommit(start, length);
 }
 
 
@@ -241,9 +236,7 @@ void CodeRange::FreeRawMemory(Address address, size_t length) {
   DCHECK(IsAddressAligned(address, MemoryChunk::kAlignment));
   free_list_.Add(FreeBlock(address, length));
   // update the CFG so that this region is unreachable
-  rock_delete_code(code_heap, address, length);
-  memset(address + Offset(), 0, length);
-  //code_range_->Uncommit(address, length);
+  RockDelCode(address, length);
 }
 
 
@@ -855,9 +848,10 @@ bool MemoryAllocator::CommitExecutableMemory(base::VirtualMemory* vm,
                                              Address start, size_t commit_size,
                                              size_t reserved_size) {
   // Commit page header (not executable).
-  if (!vm->Commit(start, CodePageGuardStartOffset(), false)) {
-    return false;
-  }
+  //fprintf(stderr, "%p, %lx\n", start, commit_size);
+  //if (!vm->Commit(start, CodePageGuardStartOffset(), false)) {
+  //  return false;
+  //}
 
   // Create guard page after the header.
   if (!vm->Guard(start + CodePageGuardStartOffset())) {
