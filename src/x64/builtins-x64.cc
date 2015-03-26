@@ -659,8 +659,11 @@ static void GenerateMakeCodeYoungAgainCommon(MacroAssembler* masm) {
   {  // NOLINT
     FrameScope scope(masm, StackFrame::MANUAL);
     __ PrepareCallCFunction(2);
+    unsigned bary_offset = masm->pc_offset();
     __ CallCFunction(
         ExternalReference::get_make_code_young_function(masm->isolate()), 2);
+    __ add_cfg_edge_combo("V8CEntryBuiltin",
+                          bary_offset + 0x12, masm->pc_offset() - 0x15);
   }
   __ Popad();
   __ ret(0);
@@ -692,9 +695,12 @@ void Builtins::Generate_MarkCodeAsExecutedOnce(MacroAssembler* masm) {
   {  // NOLINT
     FrameScope scope(masm, StackFrame::MANUAL);
     __ PrepareCallCFunction(2);
+    unsigned bary_offset = masm->pc_offset();
     __ CallCFunction(
         ExternalReference::get_mark_code_as_executed_function(masm->isolate()),
         2);
+    __ add_cfg_edge_combo("V8CEntryBuiltin",
+                          bary_offset + 0x12, masm->pc_offset() - 0x15);
   }
   __ Popad();
 

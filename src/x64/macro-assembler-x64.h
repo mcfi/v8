@@ -1338,7 +1338,7 @@ class MacroAssembler: public Assembler {
                                 Register thunk_last_arg,
                                 int stack_space,
                                 Operand return_value_operand,
-                                Operand* context_restore_operand);
+                                Operand* context_restore_operand, bool IsGetter = true);
 
   // Before calling a C-function from generated code, align arguments on stack.
   // After aligning the frame, arguments must be stored in rsp[0], rsp[8],

@@ -711,7 +711,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
     Register thunk_last_arg,
     int stack_space,
     Operand return_value_operand,
-    Operand* context_restore_operand) {
+    Operand* context_restore_operand,
+    bool IsGetter) {
   Label prologue;
   Label promote_scheduled_exception;
   Label exception_handled;
@@ -773,7 +774,14 @@ void MacroAssembler::CallApiFunctionAndReturn(
   Label Check;
   Label Try;
   bind(&Try);
+  unsigned bary_offset = pc_offset();
   call_mcfi(rax, r10, r11, &Check);
+  if (IsGetter)
+    add_cfg_edge_combo("V8CEntryCallApiGetterStub",
+                       bary_offset + 0xb, pc_offset());
+  else
+    add_cfg_edge_combo("V8CEntryCallApiFunctionStub",
+                       bary_offset + 0xb, pc_offset());
 
   if (FLAG_log_timer_events) {
     FrameScope frame(this, StackFrame::MANUAL);
@@ -861,7 +869,10 @@ void MacroAssembler::CallApiFunctionAndReturn(
   Label Check1;
   Label Try1;
   bind(&Try1);
+  bary_offset = pc_offset();
   call_mcfi(rax, r10, r11, &Check1);
+  add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions",
+                     bary_offset + 0xb, pc_offset());
   movp(rax, prev_limit_reg);
   jmp(&leave_exit_frame);
   bind(&Check);

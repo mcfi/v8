@@ -192,9 +192,10 @@ void Deoptimizer::EntryGenerator::Generate() {
 #endif
 
   { AllowExternalCallThatCantCauseGC scope(masm());
-    rai_new_deoptimizer_bary_offset = masm()->pc_offset() + 0x12;
+    unsigned bary_offset = masm()->pc_offset();
     __ CallCFunction(ExternalReference::new_deoptimizer_function(isolate()), 6);
-    rai_new_deoptimizer = masm()->pc_offset() - 0x15;
+    __ add_cfg_edge_combo("V8CEntryNewDeoptimizer",
+                          bary_offset + 0x12, masm()->pc_offset() - 0x15);
   }
   // Preserve deoptimizer object in register rax and get the input
   // frame descriptor pointer.
@@ -242,10 +243,11 @@ void Deoptimizer::EntryGenerator::Generate() {
   __ LoadAddress(arg_reg_2, ExternalReference::isolate_address(isolate()));
   {
     AllowExternalCallThatCantCauseGC scope(masm());
-    rai_compute_output_frames_bary_offset = masm()->pc_offset() + 0x12;
+    unsigned bary_offset = masm()->pc_offset();
     __ CallCFunction(
         ExternalReference::compute_output_frames_function(isolate()), 2);
-    rai_compute_output_frames = masm()->pc_offset() - 0x15;
+    __ add_cfg_edge_combo("V8CEntryComputeOutputFrames",
+                          bary_offset + 0x12, masm()->pc_offset() - 0x15);
   }
   __ popq(rax);
 

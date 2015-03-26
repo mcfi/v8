@@ -1600,14 +1600,14 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
     case kMake##name##CodeYoungAgainEvenMarking:
       switch(functions[i].name) {
         CODE_AGE_LIST(CASE)
-        isolate->code_range()->
-          RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                                  "V8CEntryBuiltin",
-                                  (void*)(code->instruction_start() + 76));
-        isolate->code_range()->
-          RockRegisterCFGMetaData(ROCK_RAI,
-                                  "V8CEntryBuiltin",
-                                  (void*)(code->instruction_start() + 88));
+          for (size_t i = 0; i < masm.CEC.size(); i++) {
+            isolate->code_range()->
+              RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm.CEC[i].name,
+                                      (void*)(code->instruction_start() + masm.CEC[i].bary_offset));
+            isolate->code_range()->
+              RockRegisterCFGMetaData(ROCK_RAI, masm.CEC[i].name,
+                                      (void*)(code->instruction_start() + masm.CEC[i].rai));
+          }
         break;
       }
 #undef CASE

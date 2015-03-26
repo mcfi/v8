@@ -254,10 +254,6 @@ class Deoptimizer : public Malloced {
     virtual ~EntryGenerator() { }
 
     void Generate();
-    unsigned rai_new_deoptimizer_bary_offset;
-    unsigned rai_new_deoptimizer;
-    unsigned rai_compute_output_frames_bary_offset;
-    unsigned rai_compute_output_frames;
 
    protected:
     MacroAssembler* masm() const { return masm_; }

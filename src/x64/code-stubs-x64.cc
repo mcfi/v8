@@ -125,9 +125,12 @@ void StoreBufferOverflowStub::Generate(MacroAssembler* masm) {
                  ExternalReference::isolate_address(isolate()));
 
   AllowExternalCallThatCantCauseGC scope(masm);
+  unsigned bary_offset = masm->pc_offset();
   __ CallCFunction(
       ExternalReference::store_buffer_overflow_function(isolate()),
       argument_count);
+  __ add_cfg_edge_combo("V8CEntryStoreBufferOverflowStub",
+                        bary_offset + 0x12, masm->pc_offset() - 0x15);
   __ PopCallerSaved(save_doubles() ? kSaveFPRegs : kDontSaveFPRegs);
   __ ret(0);
 }
@@ -2256,32 +2259,14 @@ void CodeStub::GenerateFPStubs(Isolate* isolate) {
 DECLARE_RUNTIME_FUNCTION(Runtime_CreateObjectLiteral);
 
 void CEntryStub::GenerateAheadOfTime(Isolate* isolate) {
-  CEntryStub stub(isolate, 1, kDontSaveFPRegs);
-  stub.GetCode();
-
   isolate->code_range()->
     RockRegisterCFGMetaData(ROCK_ICJ,
                             "V8CEntryRuntime",
                             (void*)Runtime_CreateObjectLiteral);
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryRuntime",
-                            (void*)((*stub.GetCode())->instruction_start() + 96));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryRuntime",
-                            (void*)((*stub.GetCode())->instruction_start() + 77));
+  CEntryStub stub(isolate, 1, kDontSaveFPRegs);
+  stub.GetCode();
   CEntryStub save_doubles(isolate, 1, kSaveFPRegs);
   save_doubles.GetCode();
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryRuntime",
-                            (void*)((*save_doubles.GetCode())->instruction_start() + 200));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryRuntime",
-                            (void*)((*save_doubles.GetCode())->instruction_start() + 181));
-
 }
 
 
@@ -2347,7 +2332,9 @@ void CEntryStub::Generate(MacroAssembler* masm) {
   Label MCFICheck;
   Label Try;
   __ bind(&Try);
+  unsigned bary_offset = masm->pc_offset();
   __ call_mcfi(rbx, r10, r11, &MCFICheck);
+  __ add_cfg_edge_combo("V8CEntryRuntime", bary_offset + 0xb, masm->pc_offset());
   // __ call_native(rbx);
   // Result is in rax - do not destroy this register!
 
@@ -3978,30 +3965,14 @@ void NameDictionaryLookupStub::Generate(MacroAssembler* masm) {
 
 void StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(
     Isolate* isolate) {
-  StoreBufferOverflowStub stub1(isolate, kDontSaveFPRegs);
-  stub1.GetCode();
   isolate->code_range()->
     RockRegisterCFGMetaData(ROCK_ICJ,
                             "V8CEntryStoreBufferOverflowStub",
                             (void*)StoreBuffer::StoreBufferOverflow);
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryStoreBufferOverflowStub",
-                            (void*)((*stub1.GetCode())->instruction_start() + 72));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryStoreBufferOverflowStub",
-                            (void*)((*stub1.GetCode())->instruction_start() + 54));
+  StoreBufferOverflowStub stub1(isolate, kDontSaveFPRegs);
+  stub1.GetCode();
   StoreBufferOverflowStub stub2(isolate, kSaveFPRegs);
   stub2.GetCode();
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryStoreBufferOverflowStub",
-                            (void*)((*stub2.GetCode())->instruction_start() + 192));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryStoreBufferOverflowStub",
-                            (void*)((*stub2.GetCode())->instruction_start() + 179));
 }
 
 void RecordWriteStub::Activate(Code* code) {
@@ -4774,9 +4745,7 @@ void CallApiFunctionStub::Generate(MacroAssembler* masm) {
       callback_arg,
       argc + FCA::kArgsLength + 1,
       return_value_operand,
-      &context_restore_operand);
-  __ add_cfg_edge_combo("V8CEntryCallApiFunctionStub", 184, 200);
-  __ add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions", 369, 384);
+      &context_restore_operand, false);
 }
 
 

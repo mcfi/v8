@@ -666,22 +666,6 @@ void NamedLoadHandlerCompiler::GenerateLoadCallback(
 
   CallApiGetterStub stub(isolate());
 
-  isolate()->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryCallApiGetterStub",
-                            (void*)((*stub.GetCode())->instruction_start() + 137));
-  isolate()->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryCallApiGetterStub",
-                            (void*)((*stub.GetCode())->instruction_start() + 152));
-  isolate()->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryHandleScopeDeleteExtensions",
-                            (void*)((*stub.GetCode())->instruction_start() + 324));
-  isolate()->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryHandleScopeDeleteExtensions",
-                            (void*)((*stub.GetCode())->instruction_start() + 336));
   __ TailCallStub(&stub);
 }
 

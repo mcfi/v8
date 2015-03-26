@@ -227,20 +227,11 @@ void Deoptimizer::DeleteDebuggerInspectableFrame(DeoptimizedFrameInfo* info,
   isolate->deoptimizer_data()->deoptimized_frame_info_ = NULL;
 }
 
-unsigned Deoptimizer::rai_new_deoptimizer_bary_offset = 0;  
-unsigned Deoptimizer::rai_new_deoptimizer = 0;
-unsigned Deoptimizer::rai_compute_output_frames_bary_offset = 0;
-unsigned Deoptimizer::rai_compute_output_frames = 0;
-
 void Deoptimizer::GenerateDeoptimizationEntries(MacroAssembler* masm,
                                                 int count,
                                                 BailoutType type) {
   TableEntryGenerator generator(masm, type, count);
   generator.Generate();
-  rai_new_deoptimizer_bary_offset = generator.rai_new_deoptimizer_bary_offset;
-  rai_new_deoptimizer = generator.rai_new_deoptimizer;
-  rai_compute_output_frames_bary_offset = generator.rai_compute_output_frames_bary_offset;
-  rai_compute_output_frames = generator.rai_compute_output_frames;
 }
 
 
@@ -2826,26 +2817,14 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
     RockFillCode(chunk->area_start(), desc.buffer, static_cast<size_t>(desc.instr_size));
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryNewDeoptimizer",
-                            (void*)(chunk->area_start() +
-                                    rai_new_deoptimizer_bary_offset));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryNewDeoptimizer",
-                            (void*)(chunk->area_start() +
-                                    rai_new_deoptimizer));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_ICJ_SYM,
-                            "V8CEntryComputeOutputFrames",
-                            (void*)(chunk->area_start() +
-                                    rai_compute_output_frames_bary_offset));
-  isolate->code_range()->
-    RockRegisterCFGMetaData(ROCK_RAI,
-                            "V8CEntryComputeOutputFrames",
-                            (void*)(chunk->area_start() +
-                                    rai_compute_output_frames));
+  for (size_t i = 0; i < masm.CEC.size(); i++) {
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm.CEC[i].name,
+                              (void*)(chunk->area_start() + masm.CEC[i].bary_offset));
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_RAI, masm.CEC[i].name,
+                              (void*)(chunk->area_start() + masm.CEC[i].rai));
+  }
   data->deopt_entry_code_entries_[type] = entry_count;
 }
 
