@@ -689,8 +689,9 @@ void Code::PatchPlatformCodeAge(Isolate* isolate,
     CpuFeatures::FlushICache(sequence, young_length);
   } else {
     Code* stub = GetCodeAgeStub(isolate, age, parity);
-    CodePatcher patcher(sequence, young_length, isolate->code_range()->Offset());
+    CodePatcher patcher(sequence, young_length, isolate);
     patcher.masm()->call(stub->instruction_start());
+    patcher.adjust_call_target();
     patcher.masm()->Nop(
         kNoCodeAgeSequenceLength - Assembler::kShortCallInstructionLength);
   }

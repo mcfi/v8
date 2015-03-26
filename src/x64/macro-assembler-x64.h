@@ -1568,16 +1568,24 @@ class MacroAssembler: public Assembler {
 // an assertion.
 class CodePatcher {
  public:
-  CodePatcher(byte* address, int size, ptrdiff_t diff = 0);
+  CodePatcher(byte* address, int size, Isolate *isolate = 0);
   virtual ~CodePatcher();
 
   // Macro assembler to emit code.
   MacroAssembler* masm() { return &masm_; }
 
+  // if the last instruction is a direct call, adjust the operand
+  // of the call function.
+  void adjust_call_target() {
+    *reinterpret_cast<int32_t*>(buffer_ + masm_.pc_offset() - 4) +=
+      (int32_t)(buffer_ - address_);
+  }
  private:
   byte* address_;  // The address of the code being patched.
   int size_;  // Number of bytes of the expected patch size.
+  byte *buffer_; // The buffer that holds the patch  
   MacroAssembler masm_;  // Macro assembler used to generate the code.
+  Isolate *isolate_;  // The current isolate
 };
 
 

@@ -5027,24 +5027,32 @@ bool AreAliased(Register reg1,
 #endif
 
 
-CodePatcher::CodePatcher(byte* address, int size, ptrdiff_t diff)
+CodePatcher::CodePatcher(byte* address, int size, Isolate *isolate)
     : address_(address),
       size_(size),
-      masm_(NULL, address, size + Assembler::kGap, diff) {
+      buffer_(new byte[size]),
+      masm_(NULL, buffer_, size + Assembler::kGap),
+      isolate_(isolate){
   // Create a new macro assembler pointing to the address of the code to patch.
   // The size is adjusted with kGap on order for the assembler to generate size
   // bytes of instructions without failing with buffer size constraints.
-  DCHECK(masm_.reloc_info_writer.pos() == address_ + size_ + Assembler::kGap);
+  DCHECK(masm_.reloc_info_writer.pos() == buffer_ + size_ + Assembler::kGap);
 }
 
 
 CodePatcher::~CodePatcher() {
+  // Commit the patches
+  if (isolate_ && isolate_->code_range()->InCodeRange(address_, size_))
+    isolate_->code_range()->RockFillCode(address_, buffer_, size_);
+  else
+    CopyBytes(address_, buffer_, size_);
+  
   // Indicate that code has changed.
   CpuFeatures::FlushICache(address_, size_);
-
   // Check that the code was patched as expected.
-  DCHECK(masm_.pc_ == address_ + size_);
-  DCHECK(masm_.reloc_info_writer.pos() == address_ + size_ + Assembler::kGap);
+  DCHECK(masm_.pc_ == buffer_ + size_);
+  DCHECK(masm_.reloc_info_writer.pos() == buffer_ + size_ + Assembler::kGap);
+  delete buffer_;
 }
 
 
