@@ -2235,6 +2235,10 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
     RockRegisterCFGMetaData(ROCK_ICJ,
                             "V8CEntryCheckStackGuardState",
                             (void*)RegExpMacroAssemblerX64::CheckStackGuardState);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntrySRockFillData",
+                            (void*)CodeRange::SRockFillData);
   CEntryStub::GenerateAheadOfTime(isolate);
   StoreBufferOverflowStub::GenerateFixedRegStubsAheadOfTime(isolate);
   StubFailureTrampolineStub::GenerateAheadOfTime(isolate);
@@ -2392,7 +2396,7 @@ void CEntryStub::Generate(MacroAssembler* masm) {
 
   // Exit the JavaScript to C++ exit frame.
   __ LeaveExitFrame(save_doubles());
-  __ ret(0); // TODO: MCFI
+  __ ret(0);
 
   // Handling of exception.
   __ bind(&exception_returned);
@@ -2707,6 +2711,8 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
   __ movp(scratch, FieldOperand(scratch, Map::kPrototypeOffset));
   __ jmp(&loop);
 
+  Label Try1, Try2, Check1, Check2;
+
   __ bind(&is_instance);
   if (!HasCallSiteInlineCheck()) {
     __ xorl(rax, rax);
@@ -2726,9 +2732,25 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
     __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
-    __ movq(kScratchRegister, masm->isolate()->code_range()->Offset());
-    __ addq(kSmiConstantRegister, kScratchRegister);
-    __ movb(Operand(kSmiConstantRegister, 0), rax);
+    __ pushq(rdi);
+    __ pushq(rdx);
+    __ pushq(rcx);
+    __ pushq(rax);
+
+    __ movq(rdi, (size_t)masm->isolate()->code_range());
+    __ movq(rsi, kSmiConstantRegister);
+    __ movq(rdx, rsp);
+    __ movq(rcx, Immediate(1)); // one byte
+    __ movq(rax, (size_t)(CodeRange::SRockFillData));
+    __ bind(&Try1);
+    unsigned bary_offset = masm->pc_offset();
+    __ call_mcfi(rax, r10, r11, &Check1);
+    __ add_cfg_edge_combo("V8CEntrySRockFillData",
+                          bary_offset + 0xb, masm->pc_offset());
+    __ popq(rax);
+    __ popq(rcx);
+    __ popq(rdx);
+    __ popq(rdi);
     __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
@@ -2759,9 +2781,25 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
     __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
-    __ movq(kScratchRegister, masm->isolate()->code_range()->Offset());
-    __ addq(kSmiConstantRegister, kScratchRegister);
-    __ movb(Operand(kSmiConstantRegister, 0), rax);
+    __ pushq(rdi);
+    __ pushq(rdx);
+    __ pushq(rcx);
+    __ pushq(rax);
+
+    __ movq(rdi, (size_t)masm->isolate()->code_range());
+    __ movq(rsi, kSmiConstantRegister);
+    __ movq(rdx, rsp);
+    __ movq(rcx, Immediate(1)); // one byte
+    __ movq(rax, (size_t)(CodeRange::SRockFillData));
+    __ bind(&Try2);
+    unsigned bary_offset = masm->pc_offset();
+    __ call_mcfi(rax, r10, r11, &Check2);
+    __ add_cfg_edge_combo("V8CEntrySRockFillData",
+                          bary_offset + 0xb, masm->pc_offset());
+    __ popq(rax);
+    __ popq(rcx);
+    __ popq(rdx);
+    __ popq(rdi);
     __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
@@ -2803,6 +2841,10 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ ret(((HasArgsInRegisters() ? 0 : 2) + extra_argument_offset) *
            kPointerSize);
   }
+  __ bind(&Check1);
+  __ check(rax, r10, r11, &Try1);
+  __ bind(&Check2);
+  __ check(rax, r10, r11, &Try2);
 }
 
 

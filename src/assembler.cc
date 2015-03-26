@@ -1709,4 +1709,16 @@ void dummy_HandleScopeDeleteExtensions(void *f,
     ((target_type)f)(isolate);
   }
 }
+
+void dummy_SRockFillData(void *f,
+                         CodeRange* cr,
+                         void *dst,
+                         void *src,
+                         size_t len) {
+  typedef void (*target_type)(CodeRange*, void*, void*, size_t);
+  CodeRange::SRockFillData(cr, dst, src, len);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(cr, dst, src, len);
+  }
+}
 } }  // namespace v8::internal

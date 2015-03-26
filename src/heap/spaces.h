@@ -928,6 +928,8 @@ class CodeRange {
     rock_code_heap_fill(code_heap, dst, src, len, (void*)1);
   }
 
+  static void SRockFillData(CodeRange* cr, void *dst, void *src, size_t len);
+
  private:
   Isolate* isolate_;
 

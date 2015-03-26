@@ -254,7 +254,10 @@ void CodeRange::TearDown() {
   allocation_list_.Free();
 }
 
-
+void CodeRange::SRockFillData(CodeRange* cr, void *dst,
+                              void *src, size_t len) {
+  return cr->RockFillData(dst, src, len);
+}
 // -----------------------------------------------------------------------------
 // MemoryAllocator
 //

@@ -718,7 +718,7 @@ void Assembler::call_native(Register adr) {
 
 void Assembler::call_mcfi(Register dst, Register bid, Register tid, Label *check) {
   EnsureSpace ensure_space(this);
-   movl(dst, dst);
+  movl(dst, dst);
   DCHECK(bid.is(r10) && tid.is(r11));
   // movq %gs:8, r10
   emit(0x65);
