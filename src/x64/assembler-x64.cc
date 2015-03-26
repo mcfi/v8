@@ -228,9 +228,8 @@ bool Operand::AddressUsesRegister(Register reg) const {
 static void InitCoverageLog();
 #endif
 
-Assembler::Assembler(Isolate* isolate, void* buffer, int buffer_size, ptrdiff_t diff)
+Assembler::Assembler(Isolate* isolate, void* buffer, int buffer_size)
     : AssemblerBase(isolate, buffer, buffer_size),
-      diff_(diff),
       code_targets_(100),
       positions_recorder_(this) {
   // Clear the buffer in debug mode unless it was provided by the
@@ -392,10 +391,10 @@ void Assembler::emit_operand(int code, const Operand& adr) {
 
   // Emit updated ModR/M byte containing the given register.
   DCHECK((adr.buf_[0] & 0x38) == 0);
-  (pc_ + diff_)[0] = adr.buf_[0] | code << 3;
+  pc_[0] = adr.buf_[0] | code << 3;
 
   // Emit the rest of the encoded operand.
-  for (unsigned i = 1; i < length; i++) (pc_ + diff_)[i] = adr.buf_[i];
+  for (unsigned i = 1; i < length; i++) pc_[i] = adr.buf_[i];
   pc_ += length;
 }
 

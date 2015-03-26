@@ -21,9 +21,8 @@
 namespace v8 {
 namespace internal {
 
-MacroAssembler::MacroAssembler(Isolate* arg_isolate, void* buffer, int size,
-                               ptrdiff_t diff)
-  : Assembler(arg_isolate, buffer, size, diff),
+MacroAssembler::MacroAssembler(Isolate* arg_isolate, void* buffer, int size)
+  : Assembler(arg_isolate, buffer, size),
       generating_stub_(false),
       has_frame_(false),
       root_array_available_(true) {
