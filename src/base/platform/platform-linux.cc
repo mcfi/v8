@@ -406,9 +406,6 @@ void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
 
 
 bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
-  if (is_executable)
-    return true;
-
 #if V8_OS_NACL
   // The Native Client port of V8 uses an interpreter,
   // so code pages don't need PROT_EXEC.
@@ -416,16 +413,13 @@ bool VirtualMemory::CommitRegion(void* base, size_t size, bool is_executable) {
 #else
   int prot = PROT_READ | (is_executable ? PROT_EXEC : PROT_WRITE);
 #endif
-  if (MAP_FAILED == mmap(base,
-                         size,
-                         prot,
-                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
-                         kMmapFd,
-                         kMmapFdOffset)) {
-    return false;
-  }
 
-  return true;
+  return MAP_FAILED != mmap(base,
+                            size,
+                            prot,
+                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
+                            kMmapFd,
+                            kMmapFdOffset);
 }
 
 

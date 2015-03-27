@@ -848,10 +848,9 @@ bool MemoryAllocator::CommitExecutableMemory(base::VirtualMemory* vm,
                                              Address start, size_t commit_size,
                                              size_t reserved_size) {
   // Commit page header (not executable).
-  //fprintf(stderr, "%p, %lx\n", start, commit_size);
-  //if (!vm->Commit(start, CodePageGuardStartOffset(), false)) {
-  //  return false;
-  //}
+  if (!vm->Commit(start, CodePageGuardStartOffset(), false)) {
+    return false;
+  }
 
   // Create guard page after the header.
   if (!vm->Guard(start + CodePageGuardStartOffset())) {
