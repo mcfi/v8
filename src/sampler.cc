@@ -318,7 +318,7 @@ class SignalHandler : public AllStatic {
   }
 
 #if !V8_OS_NACL
-  static void HandleProfilerSignal(int signal, siginfo_t* info, void* context);
+  static void HandleProfilerSignal(int signal, siginfo_t* info, void* context) __attribute__((signalhandler));
 #endif
   // Protects the process wide state below.
   static base::Mutex* mutex_;
