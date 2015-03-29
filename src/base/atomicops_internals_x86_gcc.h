@@ -31,7 +31,7 @@ inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
                                          Atomic32 old_value,
                                          Atomic32 new_value) {
   Atomic32 prev;
-  __asm__ __volatile__("lock; cmpxchgl %1,%2"
+  __asm__ __volatile__("lock; .byte 0x67\n\tcmpxchgl %1,%2"
                        : "=a" (prev)
                        : "q" (new_value), "m" (*ptr), "0" (old_value)
                        : "memory");
@@ -40,7 +40,7 @@ inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
 
 inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
                                          Atomic32 new_value) {
-  __asm__ __volatile__("xchgl %1,%0"  // The lock prefix is implicit for xchg.
+  __asm__ __volatile__(".byte 0x67\n\txchgl %1,%0"  // The lock prefix is implicit for xchg.
                        : "=r" (new_value)
                        : "m" (*ptr), "0" (new_value)
                        : "memory");
@@ -50,7 +50,7 @@ inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
 inline Atomic32 NoBarrier_AtomicIncrement(volatile Atomic32* ptr,
                                           Atomic32 increment) {
   Atomic32 temp = increment;
-  __asm__ __volatile__("lock; xaddl %0,%1"
+  __asm__ __volatile__("lock; .byte 0x67\n\txaddl %0,%1"
                        : "+r" (temp), "+m" (*ptr)
                        : : "memory");
   // temp now holds the old value of *ptr
@@ -60,7 +60,7 @@ inline Atomic32 NoBarrier_AtomicIncrement(volatile Atomic32* ptr,
 inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
                                         Atomic32 increment) {
   Atomic32 temp = increment;
-  __asm__ __volatile__("lock; xaddl %0,%1"
+  __asm__ __volatile__("lock; .byte 0x67\n\t xaddl %0,%1"
                        : "+r" (temp), "+m" (*ptr)
                        : : "memory");
   // temp now holds the old value of *ptr
@@ -163,7 +163,7 @@ inline Atomic64 NoBarrier_CompareAndSwap(volatile Atomic64* ptr,
                                          Atomic64 old_value,
                                          Atomic64 new_value) {
   Atomic64 prev;
-  __asm__ __volatile__("lock; cmpxchgq %1,%2"
+  __asm__ __volatile__("lock; .byte 0x67\n\t cmpxchgq %1,%2"
                        : "=a" (prev)
                        : "q" (new_value), "m" (*ptr), "0" (old_value)
                        : "memory");
@@ -172,7 +172,7 @@ inline Atomic64 NoBarrier_CompareAndSwap(volatile Atomic64* ptr,
 
 inline Atomic64 NoBarrier_AtomicExchange(volatile Atomic64* ptr,
                                          Atomic64 new_value) {
-  __asm__ __volatile__("xchgq %1,%0"  // The lock prefix is implicit for xchg.
+  __asm__ __volatile__(".byte 0x67\n\txchgq %1,%0"  // The lock prefix is implicit for xchg.
                        : "=r" (new_value)
                        : "m" (*ptr), "0" (new_value)
                        : "memory");
@@ -182,7 +182,7 @@ inline Atomic64 NoBarrier_AtomicExchange(volatile Atomic64* ptr,
 inline Atomic64 NoBarrier_AtomicIncrement(volatile Atomic64* ptr,
                                           Atomic64 increment) {
   Atomic64 temp = increment;
-  __asm__ __volatile__("lock; xaddq %0,%1"
+  __asm__ __volatile__("lock; .byte 0x67\n\t xaddq %0,%1"
                        : "+r" (temp), "+m" (*ptr)
                        : : "memory");
   // temp now contains the previous value of *ptr
@@ -192,7 +192,7 @@ inline Atomic64 NoBarrier_AtomicIncrement(volatile Atomic64* ptr,
 inline Atomic64 Barrier_AtomicIncrement(volatile Atomic64* ptr,
                                         Atomic64 increment) {
   Atomic64 temp = increment;
-  __asm__ __volatile__("lock; xaddq %0,%1"
+  __asm__ __volatile__("lock; .byte 0x67\n\t xaddq %0,%1"
                        : "+r" (temp), "+m" (*ptr)
                        : : "memory");
   // temp now contains the previous value of *ptr
