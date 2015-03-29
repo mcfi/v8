@@ -1359,7 +1359,7 @@ void RegExpMacroAssemblerX64::SafeCallTarget(Label* label) {
 
 void RegExpMacroAssemblerX64::SafeReturn() {
   __ addp(Operand(rsp, 0), code_object_pointer());
-  __ ret();
+  __ ret(0);
 }
 
 
