@@ -869,6 +869,7 @@ class Assembler : public AssemblerBase {
   void nop();
   void ret(int imm16);
   void ret(void);
+  void ret_mcfi(void);
   void setcc(Condition cc, Register reg);
 
   // Label operations & relative jumps (PPUM Appendix D)

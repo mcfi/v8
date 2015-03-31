@@ -2574,7 +2574,14 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
 
   // Restore frame pointer and return.
   __ popq(rbp);
-  __ ret(); // TODO: replace this return with instrumented one.
+  __ ret_mcfi();
+
+  extern Object* dummy_JSEntryStub(byte* entry,
+                                   Object* function,
+                                   Object* receiver,
+                                   int argc,
+                                   Object*** args);
+  __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)(dummy_JSEntryStub));
 }
 
 

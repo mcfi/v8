@@ -1736,11 +1736,33 @@ void Assembler::pushfq() {
   emit(0x9C);
 }
 
-void Assembler::ret(void) {
+//void Assembler::ret(void) {
+//  EnsureSpace ensure_space(this);
+//  emit(0xc3);
+//}
+
+void Assembler::ret_mcfi(void) {
   EnsureSpace ensure_space(this);
-  emit(0xc3);
+  popq(rcx);
+  movl(rcx, rcx);
+  Label Try;
+  bind(&Try);
+  // movq %gs:8, rcx
+  emit(0x65);
+  emit(0x48);emit(0x8b);emit(0x3c);emit(0x25);
+  emit(0x08);emit(0x00);emit(0x00);emit(0x00);
+  // cmpq rdi, %gs:(rcx)
+  emit(0x65);
+  cmpq(Operand(rcx, 0), rdi);
+  // jne check
+  Label Check;
+  j(not_equal, &Check, Label::kNear);
+  // jmp *%rcx
+  emit(0xff);emit(0xe1);
+  bind(&Check);
+  check(rcx, rdi, rsi, &Try);
 }
-  
+
 void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));

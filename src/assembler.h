@@ -110,6 +110,20 @@ class AssemblerBase: public Malloced {
                           unsigned int rai) {
     CEC.push_back(CFGEdgeCombo(name, bary_offset, rai));
   }
+
+  struct MCFIReturn {
+    unsigned int bary_offset;
+    uintptr_t function;
+    MCFIReturn(unsigned int bary_offset,
+               uintptr_t function) :
+      bary_offset(bary_offset), function(function) {}
+  };
+  std::vector<MCFIReturn> MCFIReturns;
+  void add_mcfi_ret(unsigned int bary_offset,
+                    uintptr_t function) {
+    MCFIReturns.push_back(MCFIReturn(bary_offset, function));
+  }
+
  protected:
   // The buffer into which code and relocation info are generated. It could
   // either be owned by the assembler or be provided externally.

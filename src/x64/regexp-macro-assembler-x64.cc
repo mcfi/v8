@@ -897,8 +897,24 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
 #endif
   // Exit function frame, restore previous one.
   __ popq(rbp);
-  __ ret();
-
+  // This routine might be recursively executed, so it might
+  // return to the JIT compiler or itself, and we need to
+  // distinguish these two different kinds of cases in order to
+  // emit correct instrumented returns.
+  Label out_code_heap_return;
+  __ movq(r10, Operand(rsp, 0));
+  __ movq(rdi, (size_t)isolate()->code_range()->start());
+  // less than the lower boundary
+  __ cmpq(r10, rdi);
+  __ j(less, &out_code_heap_return);
+  // greater than the upper boundary
+  __ addq(rdi, Immediate(isolate()->code_range()->size()));
+  __ cmpq(r10, rdi);
+  __ j(greater_equal, &out_code_heap_return);
+  __ ret(0); // return inside the code heap
+  __ bind(&out_code_heap_return);
+  __ ret_mcfi(); // return to the JIT compiler
+  __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)dummy_RegExpExecute);
   // Backtrack code (branch target for conditional backtracks).
   if (backtrack_label_.is_linked()) {
     __ bind(&backtrack_label_);
@@ -1002,6 +1018,13 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
     RockRegisterCFGMetaData(ROCK_FUNC_SYM,
                             (void*)(code->entry() + 8),
                             (void*)dummy_RegExpExecute);
+
+  for (size_t i = 0; i < masm_.MCFIReturns.size(); i++) {
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_RET,
+                              (void*)(code->instruction_start() + masm_.MCFIReturns[i].bary_offset),
+                              (void*)masm_.MCFIReturns[i].function);
+  }
 
   for (size_t i = 0; i < masm_.CEC.size(); i++) {
     isolate->code_range()->
