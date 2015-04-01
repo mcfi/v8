@@ -941,6 +941,8 @@ void Assembler::enter(Immediate size) {
   emit(0xC8);
   emitw(size.value_);  // 16 bit operand, always.
   emit(0);
+  // clear the upper 32-bits for rsp by movl %esp, %esp
+  emit(0x89);emit(0xe4);
 }
 
 
@@ -1524,7 +1526,6 @@ void Assembler::emit_movzxw(Register dst, Register src, int size) {
 void Assembler::repmovsb() {
   EnsureSpace ensure_space(this);
   emit(0x89);emit(0xff); // movl %edi, %edi
-  emit(0x89);emit(0xf6); // movl %esi, %esi
   emit(0xF3);
   emit(0xA4);
 }
@@ -1533,7 +1534,6 @@ void Assembler::repmovsb() {
 void Assembler::repmovsw() {
   EnsureSpace ensure_space(this);
   emit(0x89);emit(0xff); // movl %edi, %edi
-  emit(0x89);emit(0xf6); // movl %esi, %esi
   emit(0x66);  // Operand size override.
   emit(0xF3);
   emit(0xA4);
@@ -1543,7 +1543,6 @@ void Assembler::repmovsw() {
 void Assembler::emit_repmovs(int size) {
   EnsureSpace ensure_space(this);
   emit(0x89);emit(0xff); // movl %edi, %edi
-  emit(0x89);emit(0xf6); // movl %esi, %esi
   emit(0xF3);
   emit_rex(size);
   emit(0xA5);
