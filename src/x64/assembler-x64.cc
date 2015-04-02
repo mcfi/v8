@@ -649,6 +649,7 @@ void Assembler::bt(const Operand& dst, Register src) {
 
 void Assembler::bts(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
+  emit(0x67);
   emit_rex_64(src, dst);
   emit(0x0F);
   emit(0xAB);
