@@ -2725,14 +2725,13 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movl(rax, Immediate(true_offset));
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
-    __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
+    __ leaq(rsi, Operand(kScratchRegister, kOffsetToResultValue));
     __ pushq(rdi);
     __ pushq(rdx);
     __ pushq(rcx);
     __ pushq(rax);
 
     __ movq(rdi, (size_t)masm->isolate()->code_range());
-    __ movq(rsi, kSmiConstantRegister);
     __ movq(rdx, rsp);
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
@@ -2745,7 +2744,6 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ popq(rcx);
     __ popq(rdx);
     __ popq(rdi);
-    __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
       __ cmpl(Operand(kScratchRegister, kOffsetToResultValue - 4), rax);
@@ -2774,14 +2772,13 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movl(rax, Immediate(false_offset));
     __ movq(kScratchRegister, StackOperandForReturnAddress(0));
     __ subp(kScratchRegister, args.GetArgumentOperand(2));
-    __ leaq(kSmiConstantRegister, Operand(kScratchRegister, kOffsetToResultValue));
+    __ leaq(rsi, Operand(kScratchRegister, kOffsetToResultValue));
     __ pushq(rdi);
     __ pushq(rdx);
     __ pushq(rcx);
     __ pushq(rax);
 
     __ movq(rdi, (size_t)masm->isolate()->code_range());
-    __ movq(rsi, kSmiConstantRegister);
     __ movq(rdx, rsp);
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
@@ -2794,7 +2791,6 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ popq(rcx);
     __ popq(rdx);
     __ popq(rdi);
-    __ movq(kSmiConstantRegister, 0x100000000UL);
     if (FLAG_debug_code) {
       __ movl(rax, Immediate(kWordBeforeResultValue));
       __ cmpl(Operand(kScratchRegister, kOffsetToResultValue - 4), rax);
