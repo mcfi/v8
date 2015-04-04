@@ -5053,7 +5053,7 @@ CodePatcher::CodePatcher(byte* address, int size, Isolate *isolate)
 CodePatcher::~CodePatcher() {
   // Commit the patches
   if (isolate_ && isolate_->code_range()->InCodeRange(address_, size_))
-    isolate_->code_range()->RockFillCode(address_, buffer_, size_);
+    isolate_->code_range()->RockFillCode(address_, buffer_, size_, ROCK_REPLACE);
   else
     CopyBytes(address_, buffer_, size_);
   

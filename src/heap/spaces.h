@@ -919,12 +919,12 @@ class CodeRange {
     rock_delete_code(shadow_code_heap, addr, sz);
   }
 
-  void RockFillData(void *dst, void *src, size_t len) {
-    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)0);
+  void RockFillData(void *dst, void *src, size_t len, unsigned long flags = 0) {
+    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)(flags & (~1)));
   }
 
-  void RockFillCode(void *dst, void *src, size_t len) {
-    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)1);
+  void RockFillCode(void *dst, void *src, size_t len, unsigned long flags) {
+    rock_code_heap_fill(shadow_code_heap, dst, src, len, (void*)(flags | 1));
   }
 
   static void SRockFillData(CodeRange* cr, void *dst, void *src, size_t len);

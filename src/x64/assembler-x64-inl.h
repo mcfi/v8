@@ -233,17 +233,17 @@ void RelocInfo::apply(intptr_t delta, ICacheFlushMode icache_flush_mode,
   if (IsInternalReference(rmode_)) {
     // absolute code pointer inside code object moves with the code object.
     Address new_code_pointer = Memory::Address_at(pc_) + static_cast<int32_t>(delta);
-    isolate->code_range()->RockFillCode(pc_, &new_code_pointer, sizeof(Address));
+    isolate->code_range()->RockFillData(pc_, &new_code_pointer, sizeof(Address), ROCK_OFFSET);
     if (flush_icache) CpuFeatures::FlushICache(pc_, sizeof(Address));
   } else if (IsCodeTarget(rmode_) || IsRuntimeEntry(rmode_)) {
     int32_t idelta = Memory::int32_at(pc_) - static_cast<int32_t>(delta);
-    isolate->code_range()->RockFillCode(pc_, &idelta, sizeof(int32_t));
+    isolate->code_range()->RockFillData(pc_, &idelta, sizeof(int32_t), ROCK_OFFSET);
     if (flush_icache) CpuFeatures::FlushICache(pc_, sizeof(int32_t));
   } else if (rmode_ == CODE_AGE_SEQUENCE) {
     if (*pc_ == kCallOpcode) {
       int32_t p = *reinterpret_cast<int32_t*>(pc_ + 1);
       p -= static_cast<int32_t>(delta);  // Relocate entry.
-      isolate->code_range()->RockFillCode(pc_ + 1, &p, sizeof(int32_t));
+      isolate->code_range()->RockFillData(pc_ + 1, &p, sizeof(int32_t), ROCK_OFFSET);
       if (flush_icache) CpuFeatures::FlushICache(pc_ + 1, sizeof(uint32_t));
     }
   }

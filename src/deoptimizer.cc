@@ -2814,7 +2814,8 @@ void Deoptimizer::EnsureCodeForDeoptimizationEntry(Isolate* isolate,
   // TODO: here the deoptimization table entries are dynamically swapped,
   //       which is essentially a process of dynamic code uninstallation/installation.
   isolate->code_range()->
-    RockFillCode(chunk->area_start(), desc.buffer, static_cast<size_t>(desc.instr_size));
+    RockFillCode(chunk->area_start(), desc.buffer, static_cast<size_t>(desc.instr_size),
+                 ROCK_VERIFY | ROCK_COPY);
   CpuFeatures::FlushICache(chunk->area_start(), desc.instr_size);
 
   for (size_t i = 0; i < masm.CEC.size(); i++) {

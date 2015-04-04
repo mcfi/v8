@@ -2952,7 +2952,7 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
     PROFILE(isolate(), CodeMoveEvent(src_addr, dst_addr));
     DCHECK(heap()->isolate()->code_range()->InCodeRange(dst_addr, size));
     //heap()->MoveBlock(dst_addr+diff, src_addr, size);
-    isolate()->code_range()->RockFillCode(dst_addr, src_addr, size);
+    isolate()->code_range()->RockFillData(dst_addr, src_addr, size);
     SlotsBuffer::AddTo(&slots_buffer_allocator_, &migration_slots_buffer_,
                        SlotsBuffer::RELOCATED_CODE_OBJECT, dst_addr,
                        SlotsBuffer::IGNORE_OVERFLOW);
@@ -3353,7 +3353,7 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
           if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
             void *cc = malloc(size);
             memset(cc, 0xcc, size);
-            p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size);
+            p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size, ROCK_REPLACE);
             free(cc);
           } else
             memset(free_start, 0xcc, size);
@@ -3393,7 +3393,7 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
       if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
         void *cc = malloc(size);
         memset(cc, 0xcc, size);
-        p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size);
+        p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size, ROCK_REPLACE);
         free(cc);
       } else
         memset(free_start, 0xcc, size);

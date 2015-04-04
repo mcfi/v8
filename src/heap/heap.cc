@@ -3494,7 +3494,7 @@ AllocationResult Heap::CopyCode(Code* code) {
   // Copy code object.
   Address old_addr = code->address();
   Address new_addr = result->address();
-  isolate_->code_range()->RockFillCode(new_addr, old_addr, obj_size);
+  isolate_->code_range()->RockFillData(new_addr, old_addr, obj_size);
   Code* new_code = Code::cast(result);
 
   // Update the constant pool.
@@ -3504,6 +3504,7 @@ AllocationResult Heap::CopyCode(Code* code) {
   DCHECK(isolate_->code_range() == NULL || !isolate_->code_range()->valid() ||
          isolate_->code_range()->contains(code->address()));
   new_code->Relocate(new_addr - old_addr);
+  isolate_->code_range()->RockFillCode(new_addr, 0, obj_size, ROCK_VERIFY);
   return new_code;
 }
 

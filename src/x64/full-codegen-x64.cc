@@ -4870,7 +4870,7 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
       patch[0] = kJnsInstruction;
       patch[1] = kJnsOffset;
       unoptimized_code->GetIsolate()->code_range()->
-        RockFillCode(jns_instr_address, patch, 2);
+        RockFillCode(jns_instr_address, patch, 2, ROCK_REPLACE);
       break;
     case ON_STACK_REPLACEMENT:
     case OSR_AFTER_STACK_CHECK:
@@ -4882,7 +4882,7 @@ void BackEdgeTable::PatchAt(Code* unoptimized_code,
       patch[0] = kNopByteOne;
       patch[1] = kNopByteTwo;
       unoptimized_code->GetIsolate()->code_range()->
-        RockFillCode(jns_instr_address, patch, 2);
+        RockFillCode(jns_instr_address, patch, 2, ROCK_REPLACE);
       break;
   }
 

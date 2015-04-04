@@ -171,20 +171,20 @@ class RecordWriteStub: public PlatformCodeStub {
         patch[0] = kTwoByteNopInstruction;
         patch[2] = kFiveByteNopInstruction;
         stub->GetIsolate()->code_range()->
-          RockFillCode(stub->instruction_start(), patch, 7);
+          RockFillCode(stub->instruction_start(), patch, 7, ROCK_REPLACE);
         break;
       case INCREMENTAL:
         DCHECK(GetMode(stub) == STORE_BUFFER_ONLY);
         patch[0] = kTwoByteJumpInstruction;
         stub->GetIsolate()->code_range()->
-          RockFillCode(stub->instruction_start(), patch, 2);
+          RockFillCode(stub->instruction_start(), patch, 2, ROCK_REPLACE);
         break;
       case INCREMENTAL_COMPACTION:
         DCHECK(GetMode(stub) == STORE_BUFFER_ONLY);
         patch[0] = kTwoByteNopInstruction;
         patch[2] = kFiveByteJumpInstruction;
         stub->GetIsolate()->code_range()->
-          RockFillCode(stub->instruction_start(), patch, 7);
+          RockFillCode(stub->instruction_start(), patch, 7, ROCK_REPLACE);
         break;
     }
     DCHECK(GetMode(stub) == mode);

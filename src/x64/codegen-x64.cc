@@ -685,7 +685,7 @@ void Code::PatchPlatformCodeAge(Isolate* isolate,
     // CopyYoungSequenceTo(sequence);
     isolate->code_range()->RockFillCode((Address)sequence,
                                         isolate->code_aging_helper()->young_sequence_start(),
-                                        young_length);
+                                        young_length, ROCK_REPLACE);
     CpuFeatures::FlushICache(sequence, young_length);
   } else {
     Code* stub = GetCodeAgeStub(isolate, age, parity);
