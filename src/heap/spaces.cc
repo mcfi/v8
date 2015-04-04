@@ -2207,6 +2207,9 @@ int FreeList::Free(Address start, int size_in_bytes) {
   // Early return to drop too-small blocks on the floor.
   if (size_in_bytes < kSmallListMin) {
     page->add_non_available_small_blocks(size_in_bytes);
+    if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
+      heap_->isolate()->code_range()->RockDelCode(start, size_in_bytes);
+    }
     return size_in_bytes;
   }
 
