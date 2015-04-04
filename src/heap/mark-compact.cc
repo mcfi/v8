@@ -3351,10 +3351,14 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
         int size = static_cast<int>(free_end - free_start);
         if (free_space_mode == ZAP_FREE_SPACE) {
           if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
+            /*
             void *cc = malloc(size);
             memset(cc, 0xcc, size);
+            fprintf(stderr, "zap\n");
             p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size, ROCK_REPLACE);
+            fprintf(stderr, "zap end\n");
             free(cc);
+            */
           } else
             memset(free_start, 0xcc, size);
         }
@@ -3391,10 +3395,14 @@ static int Sweep(PagedSpace* space, FreeList* free_list, Page* p,
     int size = static_cast<int>(p->area_end() - free_start);
     if (free_space_mode == ZAP_FREE_SPACE) {
       if (p->heap()->isolate()->code_range()->InCodeRange(free_start, size)) {
+        /*
         void *cc = malloc(size);
         memset(cc, 0xcc, size);
+        fprintf(stderr, "zap\n");
         p->heap()->isolate()->code_range()->RockFillCode(free_start, cc, size, ROCK_REPLACE);
+        fprintf(stderr, "zap end\n");
         free(cc);
+        */
       } else
         memset(free_start, 0xcc, size);
     }
