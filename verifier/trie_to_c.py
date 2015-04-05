@@ -31,7 +31,7 @@ def WriteTransitionTable(out, nodes, node_to_id):
     else:
       bytes = [0] * 256
       for byte, dest_node in node.children.iteritems():
-        print byte
+        #print byte
         bytes[int(byte, 16)] = node_to_id[dest_node]
     out.write(' ' * 11 + '/* ')
     out.write('  '.join('X%x' % lower for lower in xrange(16)))
@@ -43,11 +43,11 @@ def WriteTransitionTable(out, nodes, node_to_id):
       out.write(',\n')
     out.write('  },\n')
   out.write('};\n')
-  out.write("""
-static inline uint16_t trie_lookup(uint16_t state, uint16_t byte) {
-  return trie_table[state][byte];
-}
-""")
+  #out.write("""
+#static inline uint16_t trie_lookup(uint16_t state, uint16_t byte) {
+#  return trie_table[state][byte];
+#}
+#""")
 
 
 def Main(trie_file):
@@ -63,8 +63,6 @@ def Main(trie_file):
   out = open('trie_table.h', 'w')
   out.write('\n#include <stdint.h>\n\n')
 
-  out.write('static const uint16_t trie_start = %i;\n\n' % node_to_id[root_node])
-
   accept_types = set(node.accept for node in nodes
                      if node.accept != False)
   # This accept type disappears when relative jumps with 16-bit
@@ -79,19 +77,86 @@ def Main(trie_file):
   assert 'mcficheck' in accept_types
   assert 'mcfiret' in accept_types
 
+  WriteTransitionTable(out, nodes, node_to_id)
+  states = len(nodes)
+  verifier_template = """static const struct verifier_t {
+  uint16_t *dfa;
+  int states;
+  uint16_t start;
+  uint16_t dcall;
+  uint16_t icall;
+  uint16_t jmp_rel1;
+  uint16_t jmp_rel4;
+  uint16_t mcficall;
+  uint16_t mcficheck;
+  uint16_t mcfiret;
+  int count; // number of accept states
+  uint16_t accept[16]; // point to an array of accept states
+} verifier = {
+  (uint16_t*)trie_table,
+  %d, /* states */
+  %d, /* start */
+  %d, /* dcall */
+  %d, /* icall */
+  %d, /* jmp_rel1 */
+  %d, /* jmp_rel4 */
+  %d, /* mcficall */
+  %d, /* mcficheck */
+  %d, /* mcfiret */
+  %d, /* count */
+  { %s } /* accept */
+};"""
+
+  icall = 0
+  dcall = 0
+  jmp_rel1 = 0
+  jmp_rel4 = 0
+  mcficall = 0
+  mcficheck = 0
+  mcfiret = 0
+  count = 0
+  accept = ''
   for accept_type in sorted(accept_types):
     acceptors = [node_to_id[node] for node in nodes
                  if node.accept == accept_type]
     print 'Type %r has %i acceptors' % (accept_type, len(acceptors))
-    if len(acceptors) > 0:
-      expr = ' || '.join('node_id == %i' % node_id for node_id in acceptors)
-    else:
-      expr = '0 /* These instructions are currently disallowed */'
-    out.write('static inline int trie_accepts_%s(int node_id) '
-              '{\n  return %s;\n}\n\n'
-              % (accept_type, expr))
+    if accept_type == True:
+      count = len(acceptors)
+      accept = ', '.join(str(node_id) for node_id in acceptors)
+    if accept_type == 'dcall':
+      dcall = acceptors[0]
+    if accept_type == 'icall':
+      icall = acceptors[0]
+    if accept_type == 'jmp_rel1':
+      jmp_rel1 = acceptors[0]
+    if accept_type == 'jmp_rel4':
+      jmp_rel4 = acceptors[0]
+    if accept_type == 'mcficall':
+      mcficall = acceptors[0]
+    if accept_type == 'mcficheck':
+      mcficheck = acceptors[0]
+    if accept_type == 'mcfiret':
+      mcfiret = acceptors[0]
 
-  WriteTransitionTable(out, nodes, node_to_id)
+  start = node_to_id[root_node]
+  verifier = verifier_template % (states, start, dcall, icall, jmp_rel1, jmp_rel4,\
+                                  mcficall, mcficheck, mcfiret, \
+                                  count, accept)
+  print verifier
+  out.write(verifier)
+  #for accept_type in sorted(accept_types):
+  #  acceptors = [node_to_id[node] for node in nodes
+  #               if node.accept == accept_type]
+  #  print 'Type %r has %i acceptors' % (accept_type, len(acceptors))
+  #  if len(acceptors) > 0:
+  #    expr = ' || '.join('node_id == %i' % node_id for node_id in acceptors)
+  #  else:
+  #    expr = '0 /* These instructions are currently disallowed */'
+  #  out.write('static inline int trie_accepts_%s(int node_id) '
+  #            '{\n  return %s;\n}\n\n'
+  #            % (accept_type, expr))
+  #out.write('static const uint16_t trie_start = %i;\n\n' % node_to_id[root_node])
+
   out.close()
 
 
