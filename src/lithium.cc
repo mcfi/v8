@@ -484,6 +484,8 @@ Handle<Code> LChunk::Codegen() {
                    CodeEndLinePosInfoRecordEvent(*code, jit_handler_data));
 
     CodeGenerator::PrintCode(code, info());
+    info()->isolate()->code_range()->
+      RockFillCode(code->instruction_start(), 0, code->code_size(), ROCK_VERIFY);
     DCHECK(!(info()->isolate()->serializer_enabled() &&
              info()->GetMustNotHaveEagerFrame() &&
              generator.NeedsEagerFrame()));

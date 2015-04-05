@@ -10174,9 +10174,6 @@ void Code::CopyFrom(const CodeDesc& desc) {
       it.rinfo()->apply(delta, SKIP_ICACHE_FLUSH, this->GetIsolate());
     }
   }
-  GetIsolate()->code_range()->
-    RockFillCode(instruction_start(),
-                 0, static_cast<size_t>(desc.instr_size), ROCK_VERIFY);
   CpuFeatures::FlushICache(instruction_start(), instruction_size());
 }
 

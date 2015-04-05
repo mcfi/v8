@@ -341,6 +341,8 @@ bool FullCodeGenerator::MakeCode(CompilationInfo* info) {
   code->set_profiler_ticks(0);
   code->set_back_edge_table_offset(table_offset);
   CodeGenerator::PrintCode(code, info);
+  isolate->code_range()->
+    RockFillCode(code->instruction_start(), 0, code->code_size(), ROCK_VERIFY);
   info->SetCode(code);
   void* line_info = masm.positions_recorder()->DetachJITHandlerData();
   LOG_CODE_EVENT(isolate, CodeEndLinePosInfoRecordEvent(*code, line_info));

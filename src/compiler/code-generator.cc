@@ -76,6 +76,8 @@ Handle<Code> CodeGenerator::GenerateCode() {
   void* line_info = recorder->DetachJITHandlerData();
   LOG_CODE_EVENT(isolate(), CodeEndLinePosInfoRecordEvent(*result, line_info));
 
+  isolate()->code_range()->
+    RockFillCode(result->instruction_start(), 0, result->code_size(), ROCK_VERIFY);
   return result;
 }
 

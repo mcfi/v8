@@ -1011,6 +1011,9 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
       masm_.CodeObject());
   PROFILE(isolate, RegExpCodeCreateEvent(*code, *source));
 
+  isolate->code_range()->
+    RockFillCode(code->instruction_start(), 0,
+                 code->code_size(), ROCK_VERIFY);
   // the code can be either targeted by the C++ side or the JS side, so
   // we added 8-byte nop padding at the beginning. The JS side jumps to
   // the nop padding, but the C++ side jumps after the padding.

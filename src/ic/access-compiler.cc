@@ -24,6 +24,8 @@ Handle<Code> PropertyAccessCompiler::GetCodeWithFlags(Code::Flags flags,
     code->Disassemble(name, os);
   }
 #endif
+  masm()->isolate()->code_range()->RockFillCode(code->instruction_start(), 0,
+                                                code->code_size(), ROCK_VERIFY);
   return code;
 }
 

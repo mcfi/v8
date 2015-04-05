@@ -5249,6 +5249,16 @@ class Code: public HeapObject {
   // Migrate code described by desc.
   void CopyFrom(const CodeDesc& desc);
 
+  // Code size, excluding all embedded data. Copied from Disassembler::Decode
+  int code_size() {
+    int cs = is_crankshafted()
+      ? static_cast<int>(safepoint_table_offset()) : instruction_size();
+    // If there might be a back edge table, stop before reaching it.
+    if (kind() == FUNCTION)
+      cs = Min(cs, static_cast<int>(back_edge_table_offset()));
+
+    return cs;
+  }
   // Returns the object size for a given body (used for allocation).
   static int SizeFor(int body_size) {
     DCHECK_SIZE_TAG_ALIGNED(body_size);

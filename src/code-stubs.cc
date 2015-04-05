@@ -131,6 +131,8 @@ Handle<Code> PlatformCodeStub::GenerateCode() {
   Handle<Code> new_object = factory->NewCode(
       desc, flags, masm.CodeObject(), NeedsImmovableCode());
 
+  isolate()->code_range()->RockFillCode(new_object->instruction_start(), 0,
+                                        new_object->code_size(), ROCK_VERIFY);
   for (size_t i = 0; i < masm.MCFIReturns.size(); i++) {
     isolate()->code_range()->
       RockRegisterCFGMetaData(ROCK_RET,

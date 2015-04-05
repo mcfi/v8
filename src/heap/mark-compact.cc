@@ -2951,13 +2951,15 @@ void MarkCompactCollector::MigrateObject(HeapObject* dst, HeapObject* src,
   } else if (dest == CODE_SPACE) {
     PROFILE(isolate(), CodeMoveEvent(src_addr, dst_addr));
     DCHECK(heap()->isolate()->code_range()->InCodeRange(dst_addr, size));
-    //heap()->MoveBlock(dst_addr+diff, src_addr, size);
     isolate()->code_range()->RockFillData(dst_addr, src_addr, size);
     SlotsBuffer::AddTo(&slots_buffer_allocator_, &migration_slots_buffer_,
                        SlotsBuffer::RELOCATED_CODE_OBJECT, dst_addr,
                        SlotsBuffer::IGNORE_OVERFLOW);
     Code::cast(dst)->Relocate(dst_addr - src_addr);
-    isolate()->code_range()->RockMoveCode(dst_addr, src_addr, size);
+    isolate()->code_range()->
+      RockMoveCode(Code::cast(dst)->instruction_start(),
+                   Code::cast(src)->instruction_start(),
+                   Code::cast(src)->code_size());
   } else {
     DCHECK(dest == OLD_DATA_SPACE || dest == NEW_SPACE);
     heap()->MoveBlock(dst_addr, src_addr, size);

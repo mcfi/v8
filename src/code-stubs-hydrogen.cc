@@ -248,6 +248,8 @@ Handle<Code> HydrogenCodeStub::GenerateLightweightMissCode(
       GetStubType());
   Handle<Code> new_object = factory->NewCode(
       desc, flags, masm.CodeObject(), NeedsImmovableCode());
+  isolate()->code_range()->
+    RockFillCode(new_object->instruction_start(), 0, new_object->code_size(), ROCK_VERIFY);
   return new_object;
 }
 

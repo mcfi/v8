@@ -1596,6 +1596,8 @@ void Builtins::SetUp(Isolate* isolate, bool create_heap_objects) {
         os << "\n";
       }
 #endif
+      isolate->code_range()->RockFillCode(code->instruction_start(), 0,
+                                          code->code_size(), ROCK_VERIFY);
 #define CASE(name) case kMake##name##CodeYoungAgainOddMarking:\
     case kMake##name##CodeYoungAgainEvenMarking:
       switch(functions[i].name) {

@@ -3504,7 +3504,8 @@ AllocationResult Heap::CopyCode(Code* code) {
   DCHECK(isolate_->code_range() == NULL || !isolate_->code_range()->valid() ||
          isolate_->code_range()->contains(code->address()));
   new_code->Relocate(new_addr - old_addr);
-  isolate_->code_range()->RockFillCode(new_addr, 0, obj_size, ROCK_VERIFY);
+  isolate_->code_range()->RockFillCode(new_code->instruction_start(), 0,
+                                       code->code_size(), ROCK_VERIFY);
   return new_code;
 }
 
