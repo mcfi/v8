@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# Before executing this file, remember to cd verifier and run
+# build.sh there to build the verifier.
 export MCFI_SDK=/home/ben/MCFI/toolchain
 export CXX="$MCFI_SDK/bin/clang++"
 export CC="$MCFI_SDK/bin/clang"
