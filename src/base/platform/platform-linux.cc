@@ -45,6 +45,10 @@
 #include "src/base/macros.h"
 #include "src/base/platform/platform.h"
 
+#if defined(__x86_64__)
+#include "src/x64/trie_table.h"
+#endif
+
 #if V8_OS_NACL
 #if !defined(MAP_NORESERVE)
 // PNaCL doesn't have this, so we always grab all of the memory, which is bad.
@@ -400,7 +404,7 @@ void* VirtualMemory::ReserveRegion(size_t size, void** shadow_code_heap) {
 #endif
     return result;
   } else {
-    return rock_create_code_heap(shadow_code_heap, size);
+    return rock_create_code_heap(shadow_code_heap, size, &verifier);
   }
 }
 
