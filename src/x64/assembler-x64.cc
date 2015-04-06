@@ -762,7 +762,7 @@ void Assembler::call(Register adr) {
   movl(adr, adr);
   // cmpb 0xf4, %gs:(adr)
   emit(0x65);
-  cmpb(Operand(adr, 0), Immediate(0x0));//TODO: replace 0 with 0xf4
+  cmpb(Operand(adr, 0), Immediate(0xf4));//TODO: replace 0 with 0xf4
   // jne -3
   emit(0x2e);emit(0x75);emit(0xfd);
   // Actual call adr
@@ -1182,7 +1182,7 @@ void Assembler::jmp(Register target) {
   movl(target, target);
   // cmpb $0xf4, %gs:(target)
   emit(0x65);
-  cmpb(Operand(target, 0), Immediate(0)); // TODO, replace 0 with 0xf4
+  cmpb(Operand(target, 0), Immediate(0xf4)); // TODO, replace 0 with 0xf4
   // jne -3
   emit(0x2e);emit(0x75);emit(0xfd);
   // jmp target

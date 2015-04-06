@@ -2659,7 +2659,7 @@ CALL = Instruction("call", "dcall")
 if True:
     CALL.addform(None, None, '0xe8', None, set(), set(), 32)
 
-ID = '0x00'
+ID = '0xf4'
 JNEN3 = '0x2e 0x75 0xfd'
 
 # Indirect jmp
