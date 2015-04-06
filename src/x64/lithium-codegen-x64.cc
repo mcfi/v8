@@ -71,14 +71,6 @@ void LCodeGen::FinishCode(Handle<Code> code) {
   code->set_safepoint_table_offset(safepoints_.GetCodeOffset());
   if (code->is_optimized_code()) RegisterWeakObjectsInOptimizedCode(code);
   PopulateDeoptimizationData(code);
-  for (size_t i = 0; i < masm()->CEC.size(); i++) {
-    isolate()->code_range()->
-      RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm()->CEC[i].name,
-                              (void*)(code->instruction_start() + masm()->CEC[i].bary_offset));
-    isolate()->code_range()->
-      RockRegisterCFGMetaData(ROCK_RAI, masm()->CEC[i].name,
-                              (void*)(code->instruction_start() + masm()->CEC[i].rai));
-  }
 }
 
 

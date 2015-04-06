@@ -486,6 +486,16 @@ Handle<Code> LChunk::Codegen() {
     CodeGenerator::PrintCode(code, info());
     info()->isolate()->code_range()->
       RockFillCode(code->instruction_start(), 0, code->code_size(), ROCK_VERIFY);
+    for (size_t i = 0; i < generator.masm()->CEC.size(); i++) {
+      isolate()->code_range()->
+        RockRegisterCFGMetaData(ROCK_ICJ_SYM, generator.masm()->CEC[i].name,
+                                (void*)(code->instruction_start() +
+                                        generator.masm()->CEC[i].bary_offset));
+      isolate()->code_range()->
+        RockRegisterCFGMetaData(ROCK_RAI, generator.masm()->CEC[i].name,
+                                (void*)(code->instruction_start() +
+                                        generator.masm()->CEC[i].rai));
+    }
     DCHECK(!(info()->isolate()->serializer_enabled() &&
              info()->GetMustNotHaveEagerFrame() &&
              generator.NeedsEagerFrame()));
