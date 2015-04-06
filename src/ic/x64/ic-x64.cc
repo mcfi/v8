@@ -983,8 +983,10 @@ void PatchInlinedSmiCode(Address address, InlinedSmiCheck check,
       (check == ENABLE_INLINED_SMI_CHECK)
           ? (*jmp_address == Assembler::kJncShortOpcode ? not_zero : zero)
           : (*jmp_address == Assembler::kJnzShortOpcode ? not_carry : carry);
-  byte b = static_cast<byte>(Assembler::kJccShortPrefix | cc);
-  isolate->code_range()->RockFillCode(jmp_address, &b, sizeof(byte), ROCK_REPLACE);
+  byte b[2];
+  b[0] = static_cast<byte>(Assembler::kJccShortPrefix | cc);
+  b[1] = *static_cast<uint8_t*>(jmp_address + 1);
+  isolate->code_range()->RockFillCode(jmp_address, b, sizeof(b), ROCK_REPLACE);
 }
 }
 }  // namespace v8::internal
