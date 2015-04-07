@@ -137,8 +137,8 @@ unsigned SafepointTableBuilder::GetCodeOffset() const {
 
 
 void SafepointTableBuilder::Emit(Assembler* assembler, int bits_per_entry) {
-  // Make sure the safepoint table is properly aligned. Pad with nops.
-  assembler->Align(kIntSize);
+  // Make sure the safepoint table is properly aligned. Pad with hlts.
+  assembler->AlignWithHlts(kIntSize);
   assembler->RecordComment(";;; Safepoint table.");
   offset_ = assembler->pc_offset();
 

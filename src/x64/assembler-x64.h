@@ -685,6 +685,8 @@ class Assembler : public AssemblerBase {
   // of m, where m must be a power of 2.
   void Align(int m);
   void Nop(int bytes = 1);
+  void AlignWithHlts(int m);
+
   // Aligns code to something that's optimal for a jump target for the platform.
   void CodeTargetAlign();
 

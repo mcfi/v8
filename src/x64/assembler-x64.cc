@@ -272,6 +272,14 @@ void Assembler::Align(int m) {
 }
 
 
+void Assembler::AlignWithHlts(int m) {
+  DCHECK(base::bits::IsPowerOfTwo32(m));
+  int delta = (m - (pc_offset() & (m - 1))) & (m - 1);
+  for (int i = 0; i < delta; i++)
+    hlt();
+}
+
+
 void Assembler::CodeTargetAlign() {
   Align(16);  // Preferred alignment of jump targets on x64.
 }

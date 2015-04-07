@@ -2830,6 +2830,11 @@ void LCodeGen::DoReturn(LReturn* instr) {
   if (instr->has_constant_parameter_count()) {
     __ Ret((ToInteger32(instr->constant_parameter_count()) + 1) * kPointerSize,
            rcx);
+    // Insert these two hlts to make sure that EnsureSpaceForLazyOpt won't need
+    // to emit Nops after the previous return so that the verifier won't reject
+    // the code due to not ending with a terminator instruction.
+    __ hlt();
+    __ hlt();
   } else {
     Register reg = ToRegister(instr->parameter_count());
     // The argument count parameter is a smi

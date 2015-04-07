@@ -354,7 +354,7 @@ unsigned FullCodeGenerator::EmitBackEdgeTable() {
   // The back edge table consists of a length (in number of entries)
   // field, and then a sequence of entries.  Each entry is a pair of AST id
   // and code-relative pc offset.
-  masm()->Align(kPointerSize);
+  masm()->AlignWithHlts(kPointerSize); // use hlts to align
   unsigned offset = masm()->pc_offset();
   unsigned length = back_edges_.length();
   __ dd(length);
