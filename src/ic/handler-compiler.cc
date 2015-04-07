@@ -203,6 +203,7 @@ Handle<Code> NamedLoadHandlerCompiler::CompileLoadNonexistent(
   NonexistentFrontendHeader(name, &miss, scratch2(), scratch3());
   GenerateLoadConstant(isolate()->factory()->undefined_value());
   FrontendFooter(name, &miss);
+  __ hlt();
   return GetCode(kind(), Code::FAST, name);
 }
 

@@ -823,7 +823,7 @@ Handle<Code> NamedLoadHandlerCompiler::CompileLoadGlobal(
   __ ret(0);
 
   FrontendFooter(name, &miss);
-
+  __ hlt();
   // Return the generated code.
   return GetCode(kind(), Code::NORMAL, name);
 }
