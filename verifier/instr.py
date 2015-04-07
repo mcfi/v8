@@ -2652,7 +2652,7 @@ if True:
 # Jcc rel4
 Jcc4 = Instruction("jcc", "jmp_rel4")
 if True:
-    Jcc1.addform(None, None, '0000 1111 1000 tnnn', None, set(), set(), 32, None, True)
+    Jcc4.addform(None, None, '0000 1111 1000 tnnn', None, set(), set(), 32, None, True)
 
 # Direct call
 CALL = Instruction("call", "dcall")
