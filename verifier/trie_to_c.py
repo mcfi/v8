@@ -98,8 +98,7 @@ def Main(trie_file):
   uint16_t mcficheck;
   uint16_t mcfiret;
   uint16_t terminator;
-  int count; // number of accept states
-  uint16_t accept[16]; // point to an array of accept states
+  uint16_t max_accept;
 } verifier = {
   (uint16_t*)trie_table,
   %d, /* states */
@@ -115,8 +114,7 @@ def Main(trie_file):
   %d, /* mcficheck */
   %d, /* mcfiret */
   %d, /* terminator */
-  %d, /* count */
-  { %s } /* accept */
+  %d /* max_accept */
 };"""
 
   icall = 0
@@ -130,15 +128,14 @@ def Main(trie_file):
   mcficheck = 0
   mcfiret = 0
   terminator = 0
-  count = 0
-  accept = ''
+  max_accept = ''
   for accept_type in sorted(accept_types):
     acceptors = [node_to_id[node] for node in nodes
                  if node.accept == accept_type]
     print 'Type %r has %i acceptors' % (accept_type, len(acceptors))
     if accept_type == True:
       count = len(acceptors)
-      accept = ', '.join(str(node_id) for node_id in acceptors)
+      max_accept = max(node_id for node_id in acceptors)
     if accept_type == 'dcall':
       dcall = acceptors[0]
     if accept_type == 'icall':
@@ -164,8 +161,8 @@ def Main(trie_file):
 
   start = node_to_id[root_node]
   verifier = verifier_template % (states, start, dcall, icall, ijmp, jmp_rel1, jmp_rel4,\
-                                  jcc_rel1, jcc_rel4, mcficall, mcficheck, mcfiret, terminator, \
-                                  count, accept)
+                                  jcc_rel1, jcc_rel4, mcficall, mcficheck, mcfiret,\
+                                  terminator, max_accept)
   print verifier
   out.write(verifier)
   #for accept_type in sorted(accept_types):
