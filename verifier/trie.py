@@ -27,8 +27,12 @@ def Add(root, bytes, instr):
       node.children[byte] = new
     node = node.children[byte]
   node.accept = True
-  if instr == 'jmp_rel1' or instr == 'jmp_rel4' or instr == 'dcall' or instr == 'icall' or \
-     instr == 'mcficall' or instr == 'mcficheck' or instr == 'mcfiret':
+  if instr == 'jmp_rel1' or instr == 'jmp_rel4' or \
+     instr == 'ijmp' or \
+     instr == 'jcc_rel1' or instr == 'jcc_rel4' or \
+     instr == 'dcall' or instr == 'icall' or \
+     instr == 'mcficall' or instr == 'mcficheck' or instr == 'mcfiret' or \
+     instr == 'terminator':
     node.accept = instr
 
 interned = weakref.WeakValueDictionary()

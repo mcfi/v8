@@ -71,11 +71,15 @@ def Main(trie_file):
   #accept_types.add('jump_rel2')
   assert 'jmp_rel1' in accept_types
   assert 'jmp_rel4' in accept_types
+  assert 'jcc_rel1' in accept_types
+  assert 'jcc_rel4' in accept_types
+  assert 'ijmp' in accept_types
   assert 'icall' in accept_types
   assert 'dcall' in accept_types
   assert 'mcficall' in accept_types
   assert 'mcficheck' in accept_types
   assert 'mcfiret' in accept_types
+  assert 'terminator' in accept_types
 
   WriteTransitionTable(out, nodes, node_to_id)
   states = len(nodes)
@@ -85,11 +89,15 @@ def Main(trie_file):
   uint16_t start;
   uint16_t dcall;
   uint16_t icall;
+  uint16_t ijmp;
   uint16_t jmp_rel1;
   uint16_t jmp_rel4;
+  uint16_t jcc_rel1;
+  uint16_t jcc_rel4;
   uint16_t mcficall;
   uint16_t mcficheck;
   uint16_t mcfiret;
+  uint16_t terminator;
   int count; // number of accept states
   uint16_t accept[16]; // point to an array of accept states
 } verifier = {
@@ -98,22 +106,30 @@ def Main(trie_file):
   %d, /* start */
   %d, /* dcall */
   %d, /* icall */
+  %d, /* ijmp */
   %d, /* jmp_rel1 */
   %d, /* jmp_rel4 */
+  %d, /* jcc_rel1 */
+  %d, /* jcc_rel4 */
   %d, /* mcficall */
   %d, /* mcficheck */
   %d, /* mcfiret */
+  %d, /* terminator */
   %d, /* count */
   { %s } /* accept */
 };"""
 
   icall = 0
   dcall = 0
+  ijmp = 0
   jmp_rel1 = 0
   jmp_rel4 = 0
+  jcc_rel1 = 0
+  jcc_rel4 = 0
   mcficall = 0
   mcficheck = 0
   mcfiret = 0
+  terminator = 0
   count = 0
   accept = ''
   for accept_type in sorted(accept_types):
@@ -127,20 +143,28 @@ def Main(trie_file):
       dcall = acceptors[0]
     if accept_type == 'icall':
       icall = acceptors[0]
+    if accept_type == 'ijmp':
+      ijmp = acceptors[0]
     if accept_type == 'jmp_rel1':
       jmp_rel1 = acceptors[0]
     if accept_type == 'jmp_rel4':
       jmp_rel4 = acceptors[0]
+    if accept_type == 'jcc_rel1':
+      jcc_rel1 = acceptors[0]
+    if accept_type == 'jcc_rel4':
+      jcc_rel4 = acceptors[0]
     if accept_type == 'mcficall':
       mcficall = acceptors[0]
     if accept_type == 'mcficheck':
       mcficheck = acceptors[0]
     if accept_type == 'mcfiret':
       mcfiret = acceptors[0]
+    if accept_type == 'terminator':
+      terminator = acceptors[0]
 
   start = node_to_id[root_node]
-  verifier = verifier_template % (states, start, dcall, icall, jmp_rel1, jmp_rel4,\
-                                  mcficall, mcficheck, mcfiret, \
+  verifier = verifier_template % (states, start, dcall, icall, ijmp, jmp_rel1, jmp_rel4,\
+                                  jcc_rel1, jcc_rel4, mcficall, mcficheck, mcfiret, terminator, \
                                   count, accept)
   print verifier
   out.write(verifier)

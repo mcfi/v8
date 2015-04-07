@@ -1527,12 +1527,12 @@ if True:
     CPUID.addform(None, None, '0x0f 0xa2')
 
 # HLT
-HLT = Instruction("hlt")
+HLT = Instruction("hlt", "terminator")
 if True:
     HLT.addform(None, None, '0xf4')
 
 # INT3
-INT3 = Instruction("int3")
+INT3 = Instruction("int3", "terminator")
 if True:
     INT3.addform(None, None, '0xcc')
 
@@ -2646,11 +2646,11 @@ if True:
     JMP4.addform(None, None, '0xe9', None, set(), set(), 32)
 
 # Jcc rel1
-Jcc1 = Instruction("jcc", "jmp_rel1")
+Jcc1 = Instruction("jcc", "jcc_rel1")
 if True:
     Jcc1.addform(None, None, '0111 tnnn', None, set(), set(), 8, None, True)
 # Jcc rel4
-Jcc4 = Instruction("jcc", "jmp_rel4")
+Jcc4 = Instruction("jcc", "jcc_rel4")
 if True:
     Jcc4.addform(None, None, '0000 1111 1000 tnnn', None, set(), set(), 32, None, True)
 
@@ -2663,7 +2663,7 @@ ID = '0xf4'
 JNEN3 = '0x2e 0x75 0xfd'
 
 # Indirect jmp
-IJMP = Instruction("ijmp")
+IJMP = Instruction("ijmp", "ijmp")
 if True:
     MOVL = [x + y for x in ['0x45 0x89 ', '0x45 0x8b ']
             for y in ['0xc0', '0xc9', '0xd2', '0xdb', '0xe4', '0xed', '0xf6', '0xff']]
