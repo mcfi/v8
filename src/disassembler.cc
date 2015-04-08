@@ -173,6 +173,13 @@ static int DecodeIt(Isolate* isolate,
     // Instruction.
     out.AddFormatted("%s", decode_buffer.start());
 
+    // print code bytes
+    /*
+    for (byte *p = prev_pc; p < pc; p++) {
+      fprintf(stderr, "0x%02x ", *p);
+    }
+    fprintf(stderr, "\n");
+    */
     // Print all the reloc info for this instruction which are not comments.
     for (int i = 0; i < pcs.length(); i++) {
       // Put together the reloc info
