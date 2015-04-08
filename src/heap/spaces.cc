@@ -226,8 +226,7 @@ bool CodeRange::CommitRawMemory(Address start, size_t length) {
 
 
 bool CodeRange::UncommitRawMemory(Address start, size_t length) {
-  // update the CFG so that this region is unreachable
-  RockDelCode(start, length);
+  base::OS::Guard(start, length);
   return true;
 }
 
@@ -235,8 +234,7 @@ bool CodeRange::UncommitRawMemory(Address start, size_t length) {
 void CodeRange::FreeRawMemory(Address address, size_t length) {
   DCHECK(IsAddressAligned(address, MemoryChunk::kAlignment));
   free_list_.Add(FreeBlock(address, length));
-  // update the CFG so that this region is unreachable
-  RockDelCode(address, length);
+  base::OS::Guard(address, length);
 }
 
 
