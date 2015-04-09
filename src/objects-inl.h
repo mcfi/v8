@@ -1469,7 +1469,11 @@ MapWord HeapObject::map_word() const {
 
 
 void HeapObject::set_map_word(MapWord map_word) {
-  if (this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
+  if (this->GetHeap() && // TODO: this check is added for supporting kraken-1.1
+                         //       audio-dfs.js and imaging-* programs, without which
+                         //       v8 just crashes. However, it does not make sense that
+                         //       this object's GetHeap() would return a null value.
+      this->GetIsolate()->code_range()->InCodeRange((Address)this, sizeof(Object*))) {
     Object* mapo = reinterpret_cast<Object*>(map_word.value_);
     this->GetIsolate()->code_range()->
       RockFillData(FIELD_ADDR(this, kMapOffset), &mapo, sizeof(Object*));
