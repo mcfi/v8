@@ -1838,6 +1838,16 @@ if  True:
     MOVSS.addform('0xf3', '0100 WRXB', '0x0f 0x11', '11 xmm1 xmm2')
     MOVSS.addform('0x67 0xf3', '0100 WRXB', '0x0f 0x11', 'mod xmm1 r/m')
 
+# MOVQ
+MOVQ = Instruction("movq")
+# 32-bit
+if True:
+    MOVQ.addform('0xf3', None, '0x0f 0x7e', '11 xmm1 xmm2')
+
+# 64-bit
+if True:
+    MOVQ.addform('0xf3', '0100 WRXB', '0x0f 0x7e', '11 xmm1 xmm2')
+
 # SHUFPS
 SHUFPS = Instruction("shufps")
 # 32-bit
