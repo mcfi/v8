@@ -303,6 +303,8 @@ class SignalHandler : public AllStatic {
 #else
     sa.sa_flags = SA_RESTART | SA_SIGINFO;
 #endif
+    sa.sa_flags |= SA_ONSTACK;
+
     signal_handler_installed_ =
         (sigaction(SIGPROF, &sa, &old_signal_handler_) == 0);
 #endif
@@ -340,6 +342,38 @@ void SignalHandler::HandleProfilerSignal(int signal, siginfo_t* info,
                                          void* context) {
   USE(info);
   if (signal != SIGPROF) return;
+////////////////////////////////////////////////////////////////////////////////
+// The following code deals with this scenario:
+// 1. A thread enters the rock runtime
+// 2. A signal is sent to the thread so that the signal handler is executed
+// 3. The signal handler tries to enter the rock runtime again.
+// The problem here is when the thread exits the rock handler to execute the
+// signal handler, it still holds the lock for the rock runtime. The result
+// is the program deadlocked. In general, it is a very hard problem to handle
+// signals correctly using any user-level sandbox implementation. Three methods
+// can be used to mitigate this issue:
+// 1. Do not allow signal handlers to enter the rock runtime. For signal
+//    handlers which only change some runtime data, this works. Note that
+//    if a signal handler can block indefinitely, then the whole system might
+//    not be responsive.
+// 2. For signals which can be discarded, rewrite the signal handler so that
+//    it can detect whether the signal happens in the rock runtime or the user
+//    code. If it happened in the rock runtime, exit the signal.
+// 3. The reason why it is hard to deal with signals is signal block/rock call
+//    and signal unblock are hard to made atomic with sigaction, because they
+//    are handled by the rock runtime and kernel separately. A better approach
+//    would therefore be implementing the rock runtime as a driver and inject
+//    into the kernel.
+// The following code follows the second approach, but makes the profiler
+// a bit more imprecise.
+#if V8_HOST_ARCH_X64
+  ucontext_t* test_ucontext = reinterpret_cast<ucontext_t*>(context);
+  mcontext_t& test_mcontext = test_ucontext->uc_mcontext;
+  uint64_t test_sp = (uint64_t)(test_mcontext.gregs[REG_RSP]);
+  if (test_sp >= (uint64_t)0x100000000UL)
+    return;
+#endif
+////////////////////////////////////////////////////////////////////////////////
   Isolate* isolate = Isolate::UnsafeCurrent();
   if (isolate == NULL || !isolate->IsInitialized() || !isolate->IsInUse()) {
     // We require a fully initialized and entered isolate.
