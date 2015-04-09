@@ -907,7 +907,8 @@ class Assembler : public AssemblerBase {
 
   // Call near absolute indirect, address in register
   void call(Register adr);
-  void call_mcfi(Register dst, Register bid, Register tid, Label *check);
+  void call_mcfi(Register dst, Register bid, Register tid, Label *check,
+                 /*out*/int *bary_offset);
   void call_native(Register adr);
   void check(Register dst, Register bid, Register tid, Label *Try);
   

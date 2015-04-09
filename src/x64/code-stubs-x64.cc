@@ -125,12 +125,9 @@ void StoreBufferOverflowStub::Generate(MacroAssembler* masm) {
                  ExternalReference::isolate_address(isolate()));
 
   AllowExternalCallThatCantCauseGC scope(masm);
-  unsigned bary_offset = masm->pc_offset();
   __ CallCFunction(
       ExternalReference::store_buffer_overflow_function(isolate()),
-      argument_count);
-  __ add_cfg_edge_combo("V8CEntryStoreBufferOverflowStub",
-                        bary_offset + 0x12, masm->pc_offset() - 0x15);
+      argument_count, "V8CEntryStoreBufferOverflowStub");
   __ PopCallerSaved(save_doubles() ? kSaveFPRegs : kDontSaveFPRegs);
   __ ret(0);
 }
@@ -514,11 +511,8 @@ void MathPowStub::Generate(MacroAssembler* masm) {
     {
       AllowExternalCallThatCantCauseGC scope(masm);
       __ PrepareCallCFunction(2);
-      unsigned bary_offset = masm->pc_offset();
-      __ CallCFunction(
-          ExternalReference::power_double_double_function(isolate()), 2);
-      __ add_cfg_edge_combo("V8CEntryPowerDoubleDouble",
-                            bary_offset + 0x12, masm->pc_offset() - 0x15);
+      __ CallCFunction(ExternalReference::power_double_double_function(isolate()), 2,
+                       "V8CEntryPowerDoubleDouble");
     }
     // Return value is in xmm0.
     __ movsd(double_result, xmm0);
@@ -2332,9 +2326,9 @@ void CEntryStub::Generate(MacroAssembler* masm) {
   Label MCFICheck;
   Label Try;
   __ bind(&Try);
-  unsigned bary_offset = masm->pc_offset();
-  __ call_mcfi(rbx, r10, r11, &MCFICheck);
-  __ add_cfg_edge_combo("V8CEntryRuntime", bary_offset + 0xb, masm->pc_offset());
+  int bary_offset;
+  __ call_mcfi(rbx, r10, r11, &MCFICheck, &bary_offset);
+  __ add_cfg_edge_combo("V8CEntryRuntime", bary_offset, masm->pc_offset());
   // __ call_native(rbx);
   // Result is in rax - do not destroy this register!
 
@@ -2736,10 +2730,9 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
     __ bind(&Try1);
-    unsigned bary_offset = masm->pc_offset();
-    __ call_mcfi(rax, r10, r11, &Check1);
-    __ add_cfg_edge_combo("V8CEntrySRockFillData",
-                          bary_offset + 0xb, masm->pc_offset());
+    int bary_offset;
+    __ call_mcfi(rax, r10, r11, &Check1, &bary_offset);
+    __ add_cfg_edge_combo("V8CEntrySRockFillData", bary_offset, masm->pc_offset());
     __ popq(rax);
     __ popq(rcx);
     __ popq(rdx);
@@ -2783,10 +2776,9 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
     __ bind(&Try2);
-    unsigned bary_offset = masm->pc_offset();
-    __ call_mcfi(rax, r10, r11, &Check2);
-    __ add_cfg_edge_combo("V8CEntrySRockFillData",
-                          bary_offset + 0xb, masm->pc_offset());
+    int bary_offset;
+    __ call_mcfi(rax, r10, r11, &Check2, &bary_offset);
+    __ add_cfg_edge_combo("V8CEntrySRockFillData", bary_offset, masm->pc_offset());
     __ popq(rax);
     __ popq(rcx);
     __ popq(rdx);
@@ -4072,12 +4064,9 @@ void RecordWriteStub::InformIncrementalMarker(MacroAssembler* masm) {
 
   AllowExternalCallThatCantCauseGC scope(masm);
   __ PrepareCallCFunction(argument_count);
-  unsigned bary_offset = masm->pc_offset();
   __ CallCFunction(
       ExternalReference::incremental_marking_record_write_function(isolate()),
-      argument_count);
-  __ add_cfg_edge_combo("V8CEntryRecordWriteStub",
-                        bary_offset + 0x12, masm->pc_offset() - 0x15);
+      argument_count, "V8CEntryRecordWriteStub");
   regs_.RestoreCallerSaveRegisters(masm, save_fp_regs_mode());
 }
 
@@ -4310,7 +4299,7 @@ void ProfileEntryHookStub::Generate(MacroAssembler* masm) {
 
   const int kArgumentCount = 2;
   __ PrepareCallCFunction(kArgumentCount);
-  __ CallCFunction(rax, kArgumentCount);
+  __ CallCFunction(rax, kArgumentCount, 0);
 
   // Restore volatile regs.
   masm->PopCallerSaved(kSaveFPRegs, arg_reg_1, arg_reg_2);

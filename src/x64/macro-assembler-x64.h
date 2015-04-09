@@ -1354,8 +1354,8 @@ class MacroAssembler: public Assembler {
   // garbage collection, since that might move the code and invalidate the
   // return address (unless this is somehow accounted for by the called
   // function).
-  void CallCFunction(ExternalReference function, int num_arguments);
-  void CallCFunction(Register function, int num_arguments);
+  void CallCFunction(ExternalReference function, int num_arguments, const char *centry_name);
+  void CallCFunction(Register function, int num_arguments, const char *centry_name);
 
   // Calculate the number of stack slots to reserve for arguments when calling a
   // C function.

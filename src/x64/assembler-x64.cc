@@ -725,7 +725,8 @@ void Assembler::call_native(Register adr) {
 }
 
 
-void Assembler::call_mcfi(Register dst, Register bid, Register tid, Label *check) {
+void Assembler::call_mcfi(Register dst, Register bid, Register tid,
+                          Label *check, int *bary_offset) {
   EnsureSpace ensure_space(this);
   movl(dst, dst);
   DCHECK(bid.is(r10) && tid.is(r11));
@@ -733,6 +734,7 @@ void Assembler::call_mcfi(Register dst, Register bid, Register tid, Label *check
   emit(0x65);
   emit(0x4c);emit(0x8b);emit(0x14);emit(0x25);
   emit(0x08);emit(0x00);emit(0x00);emit(0x00);
+  *bary_offset = pc_offset();
   // cmpq bid, %gs:(dst)
   emit(0x65);
   cmpq(Operand(dst, 0), bid);

@@ -1785,10 +1785,8 @@ void LCodeGen::DoDateField(LDateField* instr) {
     __ PrepareCallCFunction(2);
     __ movp(arg_reg_1, object);
     __ Move(arg_reg_2, index, Assembler::RelocInfoNone());
-    unsigned bary_offset = masm()->pc_offset();
-    __ CallCFunction(ExternalReference::get_date_field_function(isolate()), 2);
-    __ add_cfg_edge_combo("V8CEntryJSDateGetField",
-                          bary_offset + 0x12, masm()->pc_offset() - 0x15);
+    __ CallCFunction(ExternalReference::get_date_field_function(isolate()), 2,
+                     "V8CEntryJSDateGetField");
     __ bind(&done);
   }
 }
@@ -2020,7 +2018,6 @@ void LCodeGen::DoArithmeticD(LArithmeticD* instr) {
   XMMRegister left = ToDoubleRegister(instr->left());
   XMMRegister right = ToDoubleRegister(instr->right());
   XMMRegister result = ToDoubleRegister(instr->result());
-  unsigned bary_offset;
   // All operations except MOD are computed in-place.
   DCHECK(instr->op() == Token::MOD || left.is(result));
   switch (instr->op()) {
@@ -2044,11 +2041,8 @@ void LCodeGen::DoArithmeticD(LArithmeticD* instr) {
       __ PrepareCallCFunction(2);
       __ movaps(xmm_scratch, left);
       DCHECK(right.is(xmm1));
-      bary_offset = masm()->pc_offset();
-      __ CallCFunction(
-          ExternalReference::mod_two_doubles_operation(isolate()), 2);
-      __ add_cfg_edge_combo("V8CEntryMod2Doubles",
-                            bary_offset + 0x12, masm()->pc_offset() - 0x15);      
+      __ CallCFunction(ExternalReference::mod_two_doubles_operation(isolate()), 2,
+                       "V8CEntryMod2Doubles");
       __ movaps(result, xmm_scratch);
       break;
     }

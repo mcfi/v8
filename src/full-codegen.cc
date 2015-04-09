@@ -343,6 +343,14 @@ bool FullCodeGenerator::MakeCode(CompilationInfo* info) {
   CodeGenerator::PrintCode(code, info);
   isolate->code_range()->
     RockFillCode(code->instruction_start(), 0, code->code_size(), ROCK_VERIFY);
+  for (size_t i = 0; i < masm.CEC.size(); i++) {
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_ICJ_SYM, masm.CEC[i].name,
+                              (void*)(code->instruction_start() + masm.CEC[i].bary_offset));
+    isolate->code_range()->
+      RockRegisterCFGMetaData(ROCK_RAI, masm.CEC[i].name,
+                              (void*)(code->instruction_start() + masm.CEC[i].rai));
+  }
   info->SetCode(code);
   void* line_info = masm.positions_recorder()->DetachJITHandlerData();
   LOG_CODE_EVENT(isolate, CodeEndLinePosInfoRecordEvent(*code, line_info));

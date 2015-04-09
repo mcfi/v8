@@ -748,7 +748,7 @@ void MacroAssembler::CallApiFunctionAndReturn(
     PushSafepointRegisters();
     PrepareCallCFunction(1);
     LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
-    CallCFunction(ExternalReference::log_enter_external_function(isolate()), 1);
+    CallCFunction(ExternalReference::log_enter_external_function(isolate()), 1, 0);
     PopSafepointRegisters();
   }
 
@@ -774,21 +774,19 @@ void MacroAssembler::CallApiFunctionAndReturn(
   Label Check;
   Label Try;
   bind(&Try);
-  unsigned bary_offset = pc_offset();
-  call_mcfi(rax, r10, r11, &Check);
+  int bary_offset;
+  call_mcfi(rax, r10, r11, &Check, &bary_offset);
   if (IsGetter)
-    add_cfg_edge_combo("V8CEntryCallApiGetterStub",
-                       bary_offset + 0xb, pc_offset());
+    add_cfg_edge_combo("V8CEntryCallApiGetterStub", bary_offset, pc_offset());
   else
-    add_cfg_edge_combo("V8CEntryCallApiFunctionStub",
-                       bary_offset + 0xb, pc_offset());
+    add_cfg_edge_combo("V8CEntryCallApiFunctionStub", bary_offset, pc_offset());
 
   if (FLAG_log_timer_events) {
     FrameScope frame(this, StackFrame::MANUAL);
     PushSafepointRegisters();
     PrepareCallCFunction(1);
     LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
-    CallCFunction(ExternalReference::log_leave_external_function(isolate()), 1);
+    CallCFunction(ExternalReference::log_leave_external_function(isolate()), 1, 0);
     PopSafepointRegisters();
   }
 
@@ -869,10 +867,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
   Label Check1;
   Label Try1;
   bind(&Try1);
-  bary_offset = pc_offset();
-  call_mcfi(rax, r10, r11, &Check1);
-  add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions",
-                     bary_offset + 0xb, pc_offset());
+  call_mcfi(rax, r10, r11, &Check1, &bary_offset);
+  add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions", bary_offset, pc_offset());
   movp(rax, prev_limit_reg);
   jmp(&leave_exit_frame);
   bind(&Check);
@@ -4979,13 +4975,14 @@ void MacroAssembler::PrepareCallCFunction(int num_arguments) {
 
 
 void MacroAssembler::CallCFunction(ExternalReference function,
-                                   int num_arguments) {
+                                   int num_arguments, const char* centry_name) {
   LoadAddress(rax, function);
-  CallCFunction(rax, num_arguments);
+  CallCFunction(rax, num_arguments, centry_name);
 }
 
 
-void MacroAssembler::CallCFunction(Register function, int num_arguments) {
+void MacroAssembler::CallCFunction(Register function, int num_arguments,
+                                   const char* centry_name) {
   DCHECK(has_frame());
   // Check stack alignment.
   if (emit_debug_code()) {
@@ -4994,7 +4991,10 @@ void MacroAssembler::CallCFunction(Register function, int num_arguments) {
   Label MCFICheck;
   Label Try;
   bind(&Try);
-  call_mcfi(function, r10, r11, &MCFICheck);
+  int bary_offset;
+  call_mcfi(function, r10, r11, &MCFICheck, &bary_offset);
+  if (centry_name)
+    add_cfg_edge_combo(centry_name, bary_offset, pc_offset());
   DCHECK(base::OS::ActivationFrameAlignment() != 0);
   DCHECK(num_arguments >= 0);
   int argument_slots_on_stack =

@@ -347,10 +347,8 @@ void RegExpMacroAssemblerX64::CheckNotBackReferenceIgnoreCase(
       AllowExternalCallThatCantCauseGC scope(&masm_);
       ExternalReference compare =
           ExternalReference::re_case_insensitive_compare_uc16(isolate());
-      unsigned bary_offset = __ pc_offset();
-      __ CallCFunction(compare, num_arguments);
-      __ add_cfg_edge_combo("V8CEntryRECaseInsensitiveCompareUC16",
-                            bary_offset + 0x15, __ pc_offset() - 0x15);
+      __ CallCFunction(compare, num_arguments,
+                       "V8CEntryRECaseInsensitiveCompareUC16");
     }
 
     // Restore original values before reacting on result value.
@@ -974,10 +972,7 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
 #endif
     ExternalReference grow_stack =
         ExternalReference::re_grow_stack(isolate());
-    unsigned bary_offset = __ pc_offset();
-    __ CallCFunction(grow_stack, num_arguments);
-    __ add_cfg_edge_combo("V8CEntryREGrowStack",
-                          bary_offset + 0x15, __ pc_offset() - 0x15);
+    __ CallCFunction(grow_stack, num_arguments, "V8CEntryREGrowStack");
     // If return NULL, we have failed to grow the stack, and
     // must exit with a stack-overflow exception.
     __ testp(rax, rax);
@@ -1225,10 +1220,7 @@ void RegExpMacroAssemblerX64::CallCheckStackGuardState() {
 #endif
   ExternalReference stack_check =
       ExternalReference::re_check_stack_guard_state(isolate());
-  unsigned bary_offset = __ pc_offset();
-  __ CallCFunction(stack_check, num_arguments);
-  __ add_cfg_edge_combo("V8CEntryCheckStackGuardState",
-                        bary_offset + 0x15, __ pc_offset() - 0x15);
+  __ CallCFunction(stack_check, num_arguments, "V8CEntryCheckStackGuardState");
 }
 
 
