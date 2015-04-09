@@ -748,7 +748,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
     PushSafepointRegisters();
     PrepareCallCFunction(1);
     LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
-    CallCFunction(ExternalReference::log_enter_external_function(isolate()), 1, 0);
+    CallCFunction(ExternalReference::log_enter_external_function(isolate()), 1,
+                  "V8CEntryLogger");
     PopSafepointRegisters();
   }
 
@@ -786,7 +787,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
     PushSafepointRegisters();
     PrepareCallCFunction(1);
     LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
-    CallCFunction(ExternalReference::log_leave_external_function(isolate()), 1, 0);
+    CallCFunction(ExternalReference::log_leave_external_function(isolate()), 1,
+                  "V8CEntryLogger");
     PopSafepointRegisters();
   }
 
@@ -4993,8 +4995,7 @@ void MacroAssembler::CallCFunction(Register function, int num_arguments,
   bind(&Try);
   int bary_offset;
   call_mcfi(function, r10, r11, &MCFICheck, &bary_offset);
-  if (centry_name)
-    add_cfg_edge_combo(centry_name, bary_offset, pc_offset());
+  add_cfg_edge_combo(centry_name, bary_offset, pc_offset());
   DCHECK(base::OS::ActivationFrameAlignment() != 0);
   DCHECK(num_arguments >= 0);
   int argument_slots_on_stack =

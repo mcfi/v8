@@ -1620,6 +1620,32 @@ void dummy_Deoptimizer(void *f,
   }
 }
 
+
+void dummy_Logger(void *f,
+                  Isolate *isolate) {
+  typedef void (*target_type)(Isolate *);
+  Logger::EnterExternal(isolate);
+  Logger::LeaveExternal(isolate);
+  for (size_t i = 0; i < UINT_MAX; i++)
+    ((target_type)f)(isolate);
+}
+
+
+void __attribute__((noinline)) dummy_FunctionEntryHook_(uintptr_t function,
+                              uintptr_t return_addr_location) {
+  __asm__ __volatile__("hlt":::"memory");
+}
+
+
+void dummy_FunctionEntryHook(void* f) {
+  typedef void (*target_type)(uintptr_t, uintptr_t);
+  dummy_FunctionEntryHook_(1, 1);
+  for (size_t i = 0; i < UINT_MAX; i++) {
+    ((target_type)f)(1, 1);
+  }
+}
+
+
 void dummy_Double(void *f) {
   typedef double (*target_type)(double, double);
   power_double_double(0.0f, 0.0f);

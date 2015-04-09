@@ -2234,6 +2234,15 @@ void CodeStub::GenerateStubsAheadOfTime(Isolate* isolate) {
                             (void*)RegExpMacroAssemblerX64::CheckStackGuardState);
   isolate->code_range()->
     RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryLogger",
+                            (void*)Logger::EnterExternal);
+  extern void dummy_FunctionEntryHook_(uintptr_t, uintptr_t);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
+                            "V8CEntryFunctionEntryHook",
+                            (void*)dummy_FunctionEntryHook_);
+  isolate->code_range()->
+    RockRegisterCFGMetaData(ROCK_ICJ,
                             "V8CEntrySRockFillData",
                             (void*)CodeRange::SRockFillData);
   CEntryStub::GenerateAheadOfTime(isolate);
@@ -4299,7 +4308,7 @@ void ProfileEntryHookStub::Generate(MacroAssembler* masm) {
 
   const int kArgumentCount = 2;
   __ PrepareCallCFunction(kArgumentCount);
-  __ CallCFunction(rax, kArgumentCount, 0);
+  __ CallCFunction(rax, kArgumentCount, "V8CEntryFunctionEntryHook");
 
   // Restore volatile regs.
   masm->PopCallerSaved(kSaveFPRegs, arg_reg_1, arg_reg_2);
