@@ -294,8 +294,20 @@ static Type __RT_impl_##Name(Arguments args, Isolate* isolate)
 
 
 #define RUNTIME_FUNCTION(Name) RUNTIME_FUNCTION_RETURNS_TYPE(Object*, Name)
+
+// A huge hack to merge types. Returning an ObjectPair and returning an
+// Object pointer would be the same code, fortunately.
+#define RUNTIME_FUNCTION_RETURNS_TYPE_PAIR(Type, Name)                  \
+  __attribute__((noinline)) Type __RT_impl_##Name(Arguments args, Isolate* isolate); \
+  Object* Name(int args_length, Object** args_object, Isolate* isolate) { \
+    CLOBBER_DOUBLE_REGISTERS();                                         \
+    Arguments args(args_length, args_object);                           \
+    return (__RT_impl_##Name(args, isolate)).x;                         \
+  }                                                                     \
+  Type __RT_impl_##Name(Arguments args, Isolate* isolate)
+
 #define RUNTIME_FUNCTION_RETURN_PAIR(Name) \
-    RUNTIME_FUNCTION_RETURNS_TYPE(ObjectPair, Name)
+  RUNTIME_FUNCTION_RETURNS_TYPE_PAIR(ObjectPair, Name)
 
 #define RUNTIME_ARGUMENTS(isolate, args) \
   args.length(), args.arguments(), isolate
