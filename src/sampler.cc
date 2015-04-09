@@ -369,8 +369,8 @@ void SignalHandler::HandleProfilerSignal(int signal, siginfo_t* info,
 #if V8_HOST_ARCH_X64
   ucontext_t* test_ucontext = reinterpret_cast<ucontext_t*>(context);
   mcontext_t& test_mcontext = test_ucontext->uc_mcontext;
-  uint64_t test_sp = (uint64_t)(test_mcontext.gregs[REG_RSP]);
-  if (test_sp >= (uint64_t)0x100000000UL)
+  uint64_t test_ip = (uint64_t)(test_mcontext.gregs[REG_RIP]);
+  if (test_ip >= (uint64_t)0x100000000UL)
     return;
 #endif
 ////////////////////////////////////////////////////////////////////////////////
