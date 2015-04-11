@@ -2202,12 +2202,15 @@ int FreeList::Free(Address start, int size_in_bytes) {
   node->set_size(heap_, size_in_bytes);
   Page* page = Page::FromAddress(start);
 
+  // If the region contains code, delete the code first. Note that we
+  // invoke RockDelCode for any region that is in the code range, but
+  // there might not be code in the deleted region.
+  if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
+    heap_->isolate()->code_range()->RockDelCode(start, size_in_bytes);
+  }
   // Early return to drop too-small blocks on the floor.
   if (size_in_bytes < kSmallListMin) {
     page->add_non_available_small_blocks(size_in_bytes);
-    if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
-      heap_->isolate()->code_range()->RockDelCode(start, size_in_bytes);
-    }
     return size_in_bytes;
   }
 
@@ -2228,9 +2231,6 @@ int FreeList::Free(Address start, int size_in_bytes) {
   }
 
   DCHECK(IsVeryLong() || available() == SumFreeLists());
-  if (heap_->isolate()->code_range()->InCodeRange(start, size_in_bytes)) {
-    heap_->isolate()->code_range()->RockDelCode(start, size_in_bytes);
-  }
   return 0;
 }
 
