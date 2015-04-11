@@ -730,10 +730,10 @@ void Assembler::call_mcfi(Register dst, Register bid, Register tid,
   EnsureSpace ensure_space(this);
   movl(dst, dst);
   DCHECK(bid.is(r10) && tid.is(r11));
-  // movq %gs:8, r10
+  // movq %gs:0, r10
   emit(0x65);
   emit(0x4c);emit(0x8b);emit(0x14);emit(0x25);
-  emit(0x08);emit(0x00);emit(0x00);emit(0x00);
+  emit(0x00);emit(0x00);emit(0x00);emit(0x00);
   *bary_offset = pc_offset();
   // cmpq bid, %gs:(dst)
   emit(0x65);
@@ -1757,10 +1757,10 @@ void Assembler::ret_mcfi(void) {
   movl(rcx, rcx);
   Label Try;
   bind(&Try);
-  // movq %gs:8, rcx
+  // movq %gs:0, rcx
   emit(0x65);
   emit(0x48);emit(0x8b);emit(0x3c);emit(0x25);
-  emit(0x08);emit(0x00);emit(0x00);emit(0x00);
+  emit(0x00);emit(0x00);emit(0x00);emit(0x00);
   // cmpq rdi, %gs:(rcx)
   emit(0x65);
   cmpq(Operand(rcx, 0), rdi);
