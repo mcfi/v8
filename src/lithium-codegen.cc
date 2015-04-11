@@ -80,6 +80,14 @@ bool LCodeGenBase::GenerateBody() {
     }
     if (!emit_instructions) continue;
 
+    // If this basic block is not far away from the last lazy-bailout position,
+    // this block would be overwritten by the deoptimization patch, which would
+    // result in verification failure. Therefore, we emit enough padding bytes
+    // to make sure any deoptmization patch only patches on basic block.
+    if (instr->IsLabel()) {
+      GenerateDeoptPadding();
+    }
+
     if (FLAG_code_comments && instr->HasInterestingComment(codegen)) {
       Comment(";;; <@%d,#%d> %s",
               current_instruction_,
@@ -99,7 +107,9 @@ bool LCodeGenBase::GenerateBody() {
 
     GenerateBodyInstructionPost(instr);
   }
-  EnsureSpaceForLazyDeopt(Deoptimizer::patch_size());
+  // The following code makes sure that every optimized function always ends
+  // with a terminator instruction, but not a nops.
+  EnsureSpaceForLazyDeoptWithHlt(Deoptimizer::patch_size());
   last_lazy_deopt_pc_ = masm()->pc_offset();
   return !is_aborted();
 }

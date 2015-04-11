@@ -143,6 +143,7 @@ class LCodeGen: public LCodeGenBase {
 
   // Code generation passes.  Returns true if code generation should
   // continue.
+  void GenerateDeoptPadding(void) OVERRIDE;
   void GenerateBodyInstructionPre(LInstruction* instr) OVERRIDE;
   void GenerateBodyInstructionPost(LInstruction* instr) OVERRIDE;
   bool GeneratePrologue();
@@ -301,6 +302,7 @@ class LCodeGen: public LCodeGenBase {
                     int* offset,
                     AllocationSiteMode mode);
 
+  void EnsureSpaceForLazyDeoptWithHlt(int space_needed) OVERRIDE;
   void EnsureSpaceForLazyDeopt(int space_needed) OVERRIDE;
   void DoLoadKeyedExternalArray(LLoadKeyed* instr);
   void DoLoadKeyedFixedDoubleArray(LLoadKeyed* instr);

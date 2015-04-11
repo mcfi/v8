@@ -38,9 +38,10 @@ class LCodeGenBase BASE_EMBEDDED {
   void DeoptComment(const Deoptimizer::Reason& reason);
 
   bool GenerateBody();
+  virtual void GenerateDeoptPadding(void) {}
   virtual void GenerateBodyInstructionPre(LInstruction* instr) {}
   virtual void GenerateBodyInstructionPost(LInstruction* instr) {}
-
+  virtual void EnsureSpaceForLazyDeoptWithHlt(int space_needed) = 0;
   virtual void EnsureSpaceForLazyDeopt(int space_needed) = 0;
   virtual void RecordAndWritePosition(int position) = 0;
 

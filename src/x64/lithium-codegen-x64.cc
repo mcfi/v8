@@ -262,6 +262,14 @@ void LCodeGen::GenerateOsrPrologue() {
 }
 
 
+void LCodeGen::GenerateDeoptPadding(void) {
+  int gap = __ pc_offset() - last_lazy_deopt_pc_;
+  int patch_size = Deoptimizer::patch_size();
+  if (gap > 0 && gap < patch_size)
+    __ Nop(patch_size - gap);
+}
+
+
 void LCodeGen::GenerateBodyInstructionPre(LInstruction* instr) {
   if (instr->IsCall()) {
     EnsureSpaceForLazyDeopt(Deoptimizer::patch_size());
@@ -2824,11 +2832,6 @@ void LCodeGen::DoReturn(LReturn* instr) {
   if (instr->has_constant_parameter_count()) {
     __ Ret((ToInteger32(instr->constant_parameter_count()) + 1) * kPointerSize,
            rcx);
-    // Insert these two hlts to make sure that EnsureSpaceForLazyOpt won't need
-    // to emit Nops after the previous return so that the verifier won't reject
-    // the code due to not ending with a terminator instruction.
-    __ hlt();
-    __ hlt();
   } else {
     Register reg = ToRegister(instr->parameter_count());
     // The argument count parameter is a smi
@@ -5629,6 +5632,21 @@ void LCodeGen::EnsureSpaceForLazyDeopt(int space_needed) {
     if (current_pc < last_lazy_deopt_pc_ + space_needed) {
       int padding_size = last_lazy_deopt_pc_ + space_needed - current_pc;
       __ Nop(padding_size);
+    }
+  }
+  last_lazy_deopt_pc_ = masm()->pc_offset();
+}
+
+
+void LCodeGen::EnsureSpaceForLazyDeoptWithHlt(int space_needed) {
+  if (!info()->IsStub()) {
+    // Ensure that we have enough space after the previous lazy-bailout
+    // instruction for patching the code here.
+    int current_pc = masm()->pc_offset();
+    if (current_pc < last_lazy_deopt_pc_ + space_needed) {
+      int padding_size = last_lazy_deopt_pc_ + space_needed - current_pc;
+      while (padding_size-- > 0)
+        __ hlt();
     }
   }
   last_lazy_deopt_pc_ = masm()->pc_offset();
