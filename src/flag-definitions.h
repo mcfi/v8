@@ -862,6 +862,7 @@ DEFINE_BOOL(print_unopt_code, false,
             "printing optimized code based on it")
 DEFINE_BOOL(print_code_verbose, false, "print more information for code")
 DEFINE_BOOL(print_builtin_code, false, "print generated code for builtins")
+DEFINE_BOOL(print_raw_code_bytes, false, "print raw code bytes")
 
 #ifdef ENABLE_DISASSEMBLER
 DEFINE_BOOL(sodium, false,
