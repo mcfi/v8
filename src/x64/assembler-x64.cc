@@ -414,8 +414,10 @@ void Assembler::arithmetic_op(byte opcode,
                               Register reg,
                               int size, bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   emit_rex(reg, op, size);
   emit(opcode);
   emit_operand(reg, op);
@@ -463,8 +465,10 @@ void Assembler::arithmetic_op_16(byte opcode,
                                  const Operand& rm_reg,
                                  bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   emit(0x66);
   emit_optional_rex_32(reg, rm_reg);
   emit(opcode);
@@ -475,8 +479,10 @@ void Assembler::arithmetic_op_16(byte opcode,
 void Assembler::arithmetic_op_8(byte opcode, Register reg, const Operand& op,
                                 bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   if (!reg.is_byte_register()) {
     // Register is not one of al, bl, cl, dl.  Its encoding needs REX.
     emit_rex_32(reg);
@@ -533,8 +539,10 @@ void Assembler::immediate_arithmetic_op(byte subcode,
                                         Immediate src,
                                         int size, bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   emit_rex(dst, size);
   if (is_int8(src.value_)) {
     emit(0x83);
@@ -573,8 +581,10 @@ void Assembler::immediate_arithmetic_op_16(byte subcode,
                                            const Operand& dst,
                                            Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   emit(0x66);  // Operand size override prefix.
   emit_optional_rex_32(dst);
   if (is_int8(src.value_)) {
@@ -593,8 +603,10 @@ void Assembler::immediate_arithmetic_op_8(byte subcode,
                                           const Operand& dst,
                                           Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (sb)
     emit(0x67);
+#endif
   emit_optional_rex_32(dst);
   DCHECK(is_int8(src.value_) || is_uint8(src.value_));
   emit(0x80);
@@ -657,7 +669,9 @@ void Assembler::bt(const Operand& dst, Register src) {
 
 void Assembler::bts(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex_64(src, dst);
   emit(0x0F);
   emit(0xAB);
@@ -768,14 +782,16 @@ void Assembler::check(Register dst, Register bid, Register tid, Label *Try) {
 
 void Assembler::call(Register adr) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   // sandbox adr
   movl(adr, adr);
   // cmpb 0xf4, %gs:(adr)
   emit(0x65);
-  cmpb(Operand(adr, 0), Immediate(0xf4));//TODO: replace 0 with 0xf4
+  cmpb(Operand(adr, 0), Immediate(0xf4));
   // jne -3
   emit(0x2e);emit(0x75);emit(0xfd);
   // Actual call adr
+#endif
   call_native(adr);
 }
 
@@ -783,8 +799,15 @@ void Assembler::call(Register adr) {
 void Assembler::call(const Operand& op) {
   positions_recorder()->WriteRecordedPositions();
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
+  // Opcode: FF /2 m64.
+  emit_optional_rex_32(op);
+  emit(0xFF);
+  emit_operand(0x2, op);
+#else
   movq(r10, op);
   call(r10);
+#endif
 }
 
 
@@ -920,7 +943,9 @@ void Assembler::emit_dec(Register dst, int size) {
 
 void Assembler::emit_dec(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(dst, size);
   emit(0xFF);
   emit_operand(1, dst);
@@ -940,7 +965,9 @@ void Assembler::decb(Register dst) {
 
 void Assembler::decb(const Operand& dst) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(dst);
   emit(0xFE);
   emit_operand(1, dst);
@@ -1030,7 +1057,9 @@ void Assembler::emit_inc(Register dst, int size) {
 
 void Assembler::emit_inc(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(dst, size);
   emit(0xFF);
   emit_operand(0, dst);
@@ -1188,6 +1217,7 @@ void Assembler::jmp(Address entry, RelocInfo::Mode rmode) {
 void Assembler::jmp(Register target) {
   EnsureSpace ensure_space(this);
   // Opcode FF/4 r64.
+#ifdef NO_CFI
   // sandboxing: movl target, target
   movl(target, target);
   // cmpb $0xf4, %gs:(target)
@@ -1196,6 +1226,7 @@ void Assembler::jmp(Register target) {
   // jne -3
   emit(0x2e);emit(0x75);emit(0xfd);
   // jmp target
+#endif
   emit_optional_rex_32(target);
   emit(0xFF);
   emit_modrm(0x4, target);
@@ -1204,15 +1235,24 @@ void Assembler::jmp(Register target) {
 
 void Assembler::jmp(const Operand& src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
+  // Opcode FF/4 m64.
+  emit_optional_rex_32(src);
+  emit(0xFF);
+  emit_operand(0x4, src);
+#else
   movq(r10, src);
   jmp(r10);
+#endif
 }
 
 
 void Assembler::emit_lea(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (dst.is(rsp))
     size = kInt32Size;
+#endif
   emit_rex(dst, src, size);
   emit(0x8D);
   emit_operand(dst, src);
@@ -1245,8 +1285,10 @@ void Assembler::load_rax(ExternalReference ref) {
 void Assembler::leave() {
   EnsureSpace ensure_space(this);
   emit(0xC9);
+#ifdef NO_CFI
   // clear the upper 32-bits for rsp by movl %esp, %esp
   emit(0x89);emit(0xe4);
+#endif
 }
 
 
@@ -1276,7 +1318,9 @@ void Assembler::movb(Register dst, Immediate imm) {
 
 void Assembler::movb(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   if (!src.is_byte_register()) {
     // Register is not one of al, bl, cl, dl.  Its encoding needs REX.
     emit_rex_32(src, dst);
@@ -1290,7 +1334,9 @@ void Assembler::movb(const Operand& dst, Register src) {
 
 void Assembler::movb(const Operand& dst, Immediate imm) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(dst);
   emit(0xC6);
   emit_operand(0x0, dst);
@@ -1309,7 +1355,9 @@ void Assembler::movw(Register dst, const Operand& src) {
 
 void Assembler::movw(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0x66);
   emit_optional_rex_32(src, dst);
   emit(0x89);
@@ -1319,7 +1367,9 @@ void Assembler::movw(const Operand& dst, Register src) {
 
 void Assembler::movw(const Operand& dst, Immediate imm) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0x66);
   emit_optional_rex_32(dst);
   emit(0xC7);
@@ -1331,8 +1381,10 @@ void Assembler::movw(const Operand& dst, Immediate imm) {
 
 void Assembler::emit_mov(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (dst.is(rsp))
     size = kInt32Size;
+#endif
   emit_rex(dst, src, size);
   emit(0x8B);
   emit_operand(dst, src);
@@ -1341,8 +1393,10 @@ void Assembler::emit_mov(Register dst, const Operand& src, int size) {
 
 void Assembler::emit_mov(Register dst, Register src, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   if (dst.is(rsp))
     size = kInt32Size;
+#endif
   if (src.low_bits() == 4) {
     emit_rex(src, dst, size);
     emit(0x89);
@@ -1357,7 +1411,9 @@ void Assembler::emit_mov(Register dst, Register src, int size) {
 
 void Assembler::emit_mov(const Operand& dst, Register src, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(src, dst, size);
   emit(0x89);
   emit_operand(src, dst);
@@ -1380,7 +1436,9 @@ void Assembler::emit_mov(Register dst, Immediate value, int size) {
 
 void Assembler::emit_mov(const Operand& dst, Immediate value, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(dst, size);
   emit(0xC7);
   emit_operand(0x0, dst);
@@ -1413,7 +1471,9 @@ void Assembler::movq(Register dst, uint64_t value) {
 // (as a 32-bit offset sign extended to 64-bit).
 void Assembler::movl(const Operand& dst, Label* src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(dst);
   emit(0xC7);
   emit_operand(0, dst);
@@ -1536,7 +1596,9 @@ void Assembler::emit_movzxw(Register dst, Register src, int size) {
 
 void Assembler::repmovsb() {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x89);emit(0xff); // movl %edi, %edi
+#endif
   emit(0xF3);
   emit(0xA4);
 }
@@ -1544,7 +1606,9 @@ void Assembler::repmovsb() {
 
 void Assembler::repmovsw() {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x89);emit(0xff); // movl %edi, %edi
+#endif
   emit(0x66);  // Operand size override.
   emit(0xF3);
   emit(0xA4);
@@ -1578,7 +1642,9 @@ void Assembler::emit_neg(Register dst, int size) {
 
 void Assembler::emit_neg(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex_64(dst);
   emit(0xF7);
   emit_operand(3, dst);
@@ -1601,7 +1667,9 @@ void Assembler::emit_not(Register dst, int size) {
 
 void Assembler::emit_not(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(dst, size);
   emit(0xF7);
   emit_operand(2, dst);
@@ -1694,7 +1762,9 @@ void Assembler::popq(Register dst) {
 
 void Assembler::popq(const Operand& dst) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(dst);
   emit(0x8F);
   emit_operand(0, dst);
@@ -1776,6 +1846,15 @@ void Assembler::ret_mcfi(void) {
 void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));
+#ifdef NO_CFI
+  if (imm16 == 0) {
+    emit(0xC3);
+  } else {
+    emit(0xC2);
+    emit(imm16 & 0xFF);
+    emit((imm16 >> 8) & 0xFF);
+  }
+#else
   // pop return address to r10
   popq(r10);
   // if imm16 != 0, addl $imm16, %esp
@@ -1783,6 +1862,7 @@ void Assembler::ret(int imm16) {
     addl(rsp, Immediate(imm16));
   // jmp r10
   jmp(r10);
+#endif
 }
 
 
@@ -1841,7 +1921,9 @@ void Assembler::emit_xchg(Register dst, Register src, int size) {
 
 void Assembler::emit_xchg(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_rex(dst, src, size);
   emit(0x87);
   emit_operand(dst, src);
@@ -2040,7 +2122,9 @@ void Assembler::fld_d(const Operand& adr) {
 
 void Assembler::fstp_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xD9);
   emit_operand(3, adr);
@@ -2048,7 +2132,9 @@ void Assembler::fstp_s(const Operand& adr) {
 
 
 void Assembler::fstp_d(const Operand& adr) {
+#ifdef NO_CFI
   emit(0x67);
+#endif
   EnsureSpace ensure_space(this);
   emit_optional_rex_32(adr);
   emit(0xDD);
@@ -2081,7 +2167,9 @@ void Assembler::fild_d(const Operand& adr) {
 
 void Assembler::fistp_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xDB);
   emit_operand(3, adr);
@@ -2091,7 +2179,9 @@ void Assembler::fistp_s(const Operand& adr) {
 void Assembler::fisttp_s(const Operand& adr) {
   DCHECK(IsEnabled(SSE3));
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xDB);
   emit_operand(1, adr);
@@ -2101,7 +2191,9 @@ void Assembler::fisttp_s(const Operand& adr) {
 void Assembler::fisttp_d(const Operand& adr) {
   DCHECK(IsEnabled(SSE3));
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xDD);
   emit_operand(1, adr);
@@ -2110,7 +2202,9 @@ void Assembler::fisttp_d(const Operand& adr) {
 
 void Assembler::fist_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xDB);
   emit_operand(2, adr);
@@ -2119,7 +2213,9 @@ void Assembler::fist_s(const Operand& adr) {
 
 void Assembler::fistp_d(const Operand& adr) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit_optional_rex_32(adr);
   emit(0xDF);
   emit_operand(7, adr);
@@ -2560,7 +2656,9 @@ void Assembler::movq(XMMRegister dst, XMMRegister src) {
 
 void Assembler::movdqa(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0x66);
   emit_rex_64(src, dst);
   emit(0x0F);
@@ -2581,7 +2679,9 @@ void Assembler::movdqa(XMMRegister dst, const Operand& src) {
 
 void Assembler::movdqu(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0xF3);
   emit_rex_64(src, dst);
   emit(0x0F);
@@ -2616,7 +2716,9 @@ void Assembler::extractps(Register dst, XMMRegister src, byte imm8) {
 
 void Assembler::movsd(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0xF2);  // double
   emit_optional_rex_32(src, dst);
   emit(0x0F);
@@ -2704,7 +2806,9 @@ void Assembler::movss(XMMRegister dst, const Operand& src) {
 
 void Assembler::movss(const Operand& src, XMMRegister dst) {
   EnsureSpace ensure_space(this);
+#ifdef NO_CFI
   emit(0x67);
+#endif
   emit(0xF3);  // single
   emit_optional_rex_32(dst, src);
   emit(0x0F);
