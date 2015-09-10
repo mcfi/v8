@@ -414,7 +414,7 @@ void Assembler::arithmetic_op(byte opcode,
                               Register reg,
                               int size, bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -465,7 +465,7 @@ void Assembler::arithmetic_op_16(byte opcode,
                                  const Operand& rm_reg,
                                  bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -479,7 +479,7 @@ void Assembler::arithmetic_op_16(byte opcode,
 void Assembler::arithmetic_op_8(byte opcode, Register reg, const Operand& op,
                                 bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -539,7 +539,7 @@ void Assembler::immediate_arithmetic_op(byte subcode,
                                         Immediate src,
                                         int size, bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -581,7 +581,7 @@ void Assembler::immediate_arithmetic_op_16(byte subcode,
                                            const Operand& dst,
                                            Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -603,7 +603,7 @@ void Assembler::immediate_arithmetic_op_8(byte subcode,
                                           const Operand& dst,
                                           Immediate src, bool sb) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (sb)
     emit(0x67);
 #endif
@@ -669,7 +669,7 @@ void Assembler::bt(const Operand& dst, Register src) {
 
 void Assembler::bts(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex_64(src, dst);
@@ -782,7 +782,7 @@ void Assembler::check(Register dst, Register bid, Register tid, Label *Try) {
 
 void Assembler::call(Register adr) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // sandbox adr
   movl(adr, adr);
   // cmpb 0xf4, %gs:(adr)
@@ -799,7 +799,7 @@ void Assembler::call(Register adr) {
 void Assembler::call(const Operand& op) {
   positions_recorder()->WriteRecordedPositions();
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   movq(r10, op);
   call(r10);
 #else
@@ -943,7 +943,7 @@ void Assembler::emit_dec(Register dst, int size) {
 
 void Assembler::emit_dec(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(dst, size);
@@ -965,7 +965,7 @@ void Assembler::decb(Register dst) {
 
 void Assembler::decb(const Operand& dst) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(dst);
@@ -979,7 +979,7 @@ void Assembler::enter(Immediate size) {
   emit(0xC8);
   emitw(size.value_);  // 16 bit operand, always.
   emit(0);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // clear the upper 32-bits for rsp by movl %esp, %esp
   emit(0x89);emit(0xe4);
 #endif
@@ -1059,7 +1059,7 @@ void Assembler::emit_inc(Register dst, int size) {
 
 void Assembler::emit_inc(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(dst, size);
@@ -1219,7 +1219,7 @@ void Assembler::jmp(Address entry, RelocInfo::Mode rmode) {
 void Assembler::jmp(Register target) {
   EnsureSpace ensure_space(this);
   // Opcode FF/4 r64.
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // sandboxing: movl target, target
   movl(target, target);
   // cmpb $0xf4, %gs:(target)
@@ -1237,7 +1237,7 @@ void Assembler::jmp(Register target) {
 
 void Assembler::jmp(const Operand& src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   movq(r10, src);
   jmp(r10);
 #else
@@ -1251,7 +1251,7 @@ void Assembler::jmp(const Operand& src) {
 
 void Assembler::emit_lea(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (dst.is(rsp))
     size = kInt32Size;
 #endif
@@ -1287,7 +1287,7 @@ void Assembler::load_rax(ExternalReference ref) {
 void Assembler::leave() {
   EnsureSpace ensure_space(this);
   emit(0xC9);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // clear the upper 32-bits for rsp by movl %esp, %esp
   emit(0x89);emit(0xe4);
 #endif
@@ -1320,7 +1320,7 @@ void Assembler::movb(Register dst, Immediate imm) {
 
 void Assembler::movb(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   if (!src.is_byte_register()) {
@@ -1336,7 +1336,7 @@ void Assembler::movb(const Operand& dst, Register src) {
 
 void Assembler::movb(const Operand& dst, Immediate imm) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(dst);
@@ -1357,7 +1357,7 @@ void Assembler::movw(Register dst, const Operand& src) {
 
 void Assembler::movw(const Operand& dst, Register src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0x66);
@@ -1369,7 +1369,7 @@ void Assembler::movw(const Operand& dst, Register src) {
 
 void Assembler::movw(const Operand& dst, Immediate imm) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0x66);
@@ -1383,7 +1383,7 @@ void Assembler::movw(const Operand& dst, Immediate imm) {
 
 void Assembler::emit_mov(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (dst.is(rsp))
     size = kInt32Size;
 #endif
@@ -1395,7 +1395,7 @@ void Assembler::emit_mov(Register dst, const Operand& src, int size) {
 
 void Assembler::emit_mov(Register dst, Register src, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   if (dst.is(rsp))
     size = kInt32Size;
 #endif
@@ -1413,7 +1413,7 @@ void Assembler::emit_mov(Register dst, Register src, int size) {
 
 void Assembler::emit_mov(const Operand& dst, Register src, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(src, dst, size);
@@ -1438,7 +1438,7 @@ void Assembler::emit_mov(Register dst, Immediate value, int size) {
 
 void Assembler::emit_mov(const Operand& dst, Immediate value, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(dst, size);
@@ -1473,7 +1473,7 @@ void Assembler::movq(Register dst, uint64_t value) {
 // (as a 32-bit offset sign extended to 64-bit).
 void Assembler::movl(const Operand& dst, Label* src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(dst);
@@ -1598,7 +1598,7 @@ void Assembler::emit_movzxw(Register dst, Register src, int size) {
 
 void Assembler::repmovsb() {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x89);emit(0xff); // movl %edi, %edi
 #endif
   emit(0xF3);
@@ -1608,7 +1608,7 @@ void Assembler::repmovsb() {
 
 void Assembler::repmovsw() {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x89);emit(0xff); // movl %edi, %edi
 #endif
   emit(0x66);  // Operand size override.
@@ -1619,7 +1619,7 @@ void Assembler::repmovsw() {
 
 void Assembler::emit_repmovs(int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x89);emit(0xff); // movl %edi, %edi
 #endif
   emit(0xF3);
@@ -1646,7 +1646,7 @@ void Assembler::emit_neg(Register dst, int size) {
 
 void Assembler::emit_neg(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex_64(dst);
@@ -1671,7 +1671,7 @@ void Assembler::emit_not(Register dst, int size) {
 
 void Assembler::emit_not(const Operand& dst, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(dst, size);
@@ -1766,7 +1766,7 @@ void Assembler::popq(Register dst) {
 
 void Assembler::popq(const Operand& dst) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(dst);
@@ -1850,7 +1850,7 @@ void Assembler::ret_mcfi(void) {
 void Assembler::ret(int imm16) {
   EnsureSpace ensure_space(this);
   DCHECK(is_uint16(imm16));
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // pop return address to r10
   popq(r10);
   // if imm16 != 0, addl $imm16, %esp
@@ -1925,7 +1925,7 @@ void Assembler::emit_xchg(Register dst, Register src, int size) {
 
 void Assembler::emit_xchg(Register dst, const Operand& src, int size) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_rex(dst, src, size);
@@ -2126,7 +2126,7 @@ void Assembler::fld_d(const Operand& adr) {
 
 void Assembler::fstp_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2136,7 +2136,7 @@ void Assembler::fstp_s(const Operand& adr) {
 
 
 void Assembler::fstp_d(const Operand& adr) {
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   EnsureSpace ensure_space(this);
@@ -2171,7 +2171,7 @@ void Assembler::fild_d(const Operand& adr) {
 
 void Assembler::fistp_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2183,7 +2183,7 @@ void Assembler::fistp_s(const Operand& adr) {
 void Assembler::fisttp_s(const Operand& adr) {
   DCHECK(IsEnabled(SSE3));
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2195,7 +2195,7 @@ void Assembler::fisttp_s(const Operand& adr) {
 void Assembler::fisttp_d(const Operand& adr) {
   DCHECK(IsEnabled(SSE3));
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2206,7 +2206,7 @@ void Assembler::fisttp_d(const Operand& adr) {
 
 void Assembler::fist_s(const Operand& adr) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2217,7 +2217,7 @@ void Assembler::fist_s(const Operand& adr) {
 
 void Assembler::fistp_d(const Operand& adr) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit_optional_rex_32(adr);
@@ -2660,7 +2660,7 @@ void Assembler::movq(XMMRegister dst, XMMRegister src) {
 
 void Assembler::movdqa(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0x66);
@@ -2683,7 +2683,7 @@ void Assembler::movdqa(XMMRegister dst, const Operand& src) {
 
 void Assembler::movdqu(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0xF3);
@@ -2720,7 +2720,7 @@ void Assembler::extractps(Register dst, XMMRegister src, byte imm8) {
 
 void Assembler::movsd(const Operand& dst, XMMRegister src) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0xF2);  // double
@@ -2810,7 +2810,7 @@ void Assembler::movss(XMMRegister dst, const Operand& src) {
 
 void Assembler::movss(const Operand& src, XMMRegister dst) {
   EnsureSpace ensure_space(this);
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   emit(0x67);
 #endif
   emit(0xF3);  // single

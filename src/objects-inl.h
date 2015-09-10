@@ -1479,7 +1479,7 @@ void HeapObject::set_map_word(MapWord map_word) {
       RockFillData(FIELD_ADDR(this, kMapOffset), &mapo, sizeof(Object*));
   } else
     NOBARRIER_WRITE_FIELD(
-      (Address)this, kMapOffset, reinterpret_cast<Object*>(map_word.value_));  
+      (Address)this, kMapOffset, reinterpret_cast<Object*>(map_word.value_));
 }
 
 

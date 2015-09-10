@@ -10141,7 +10141,7 @@ void Code::CopyFrom(const CodeDesc& desc) {
   // Needed to find target_object and runtime_entry on X64
   Assembler* origin = desc.origin;
   AllowDeferredHandleDereference embedding_raw_address;
-  
+
   for (RelocIterator it(this, mode_mask); !it.done(); it.next()) {
     RelocInfo::Mode mode = it.rinfo()->rmode();
     if (mode == RelocInfo::EMBEDDED_OBJECT) {

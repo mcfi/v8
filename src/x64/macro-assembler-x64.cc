@@ -5057,7 +5057,7 @@ CodePatcher::~CodePatcher() {
     isolate_->code_range()->RockFillCode(address_, buffer_, size_, ROCK_REPLACE);
   else
     CopyBytes(address_, buffer_, size_);
-  
+
   // Indicate that code has changed.
   CpuFeatures::FlushICache(address_, size_);
   // Check that the code was patched as expected.

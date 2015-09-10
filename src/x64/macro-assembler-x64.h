@@ -1583,7 +1583,7 @@ class CodePatcher {
  private:
   byte* address_;  // The address of the code being patched.
   int size_;  // Number of bytes of the expected patch size.
-  byte *buffer_; // The buffer that holds the patch  
+  byte *buffer_; // The buffer that holds the patch
   MacroAssembler masm_;  // Macro assembler used to generate the code.
   Isolate *isolate_;  // The current isolate
 };

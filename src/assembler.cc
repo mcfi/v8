@@ -1587,7 +1587,7 @@ void dummy_CallApiGetterStub(void *f,
 void dummy_CallApiFunctionStub(void *f,
                                const v8::FunctionCallbackInfo<v8::Value>& value) {
   typedef void (*target_type_function)(const v8::FunctionCallbackInfo<v8::Value>&);
-  
+
   dummy_ApiFunction(value);
   // the loop prevents tail-call-opt
   for (size_t i = 0; i < UINT_MAX; i++)
@@ -1721,7 +1721,7 @@ void dummy_CodeAgeSequence(void *f,
                            byte* sequence, Isolate *isolate) {
   typedef void (*target_type)(byte*, Isolate*);
   Code::MakeCodeAgeSequenceYoung(sequence, isolate);
-  Code::MarkCodeAsExecuted(sequence, isolate);  
+  Code::MarkCodeAsExecuted(sequence, isolate);
   for (size_t i = 0; i < UINT_MAX; i++) {
     ((target_type)f)(sequence, isolate);
   }

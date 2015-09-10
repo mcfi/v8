@@ -177,7 +177,7 @@ struct LazyInstanceImpl {
   static void __InitInstance(void *storage) {
     InitInstance(reinterpret_cast<StorageType*>(storage)); // NOLINT
   }
-  
+
   void Init() const {
     InitOnceTrait::Init(
         &once_,

@@ -568,7 +568,7 @@ class Assembler : public AssemblerBase {
   // and the return address pushed on the stack.
   static const int kCallTargetAddressOffset = 4;  // Use 32-bit displacement.
   // The length of call(kScratchRegister).
-#ifndef NO_CFI
+#ifndef NO_JITCODE_CFI
   // A CFI checked indirect call r10 is of 14 bytes
   static const int kCallScratchRegisterInstructionLength = 14;
 #else
@@ -916,7 +916,7 @@ class Assembler : public AssemblerBase {
                  /*out*/int *bary_offset);
   void call_native(Register adr);
   void check(Register dst, Register bid, Register tid, Label *Try);
-  
+
   // Jumps
   // Jump short or near relative.
   // Use a 32-bit signed displacement.
@@ -1395,14 +1395,18 @@ class Assembler : public AssemblerBase {
 
   // Arithmetics
   void emit_add(Register dst, Register src, int size) {
+#ifndef NO_JITCODE_CFI
     if (dst.is(rsp))
       size = kInt32Size;
+#endif
     arithmetic_op(0x03, dst, src, size);
   }
 
   void emit_add(Register dst, Immediate src, int size) {
+#ifndef NO_JITCODE_CFI
     if (dst.is(rsp))
       size = kInt32Size;
+#endif
     immediate_arithmetic_op(0x0, dst, src, size);
   }
 
@@ -1419,10 +1423,12 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_and(Register dst, Register src, int size) {
+#ifndef NO_JITCODE_CFI
     // when dst == rsp && size == kInt64Size, we need to
     // use 32-bit version to sandbox rsp
     if (dst.is(rsp))
       size = kInt32Size;
+#endif
     arithmetic_op(0x23, dst, src, size);
   }
 
@@ -1529,14 +1535,18 @@ class Assembler : public AssemblerBase {
   }
 
   void emit_sub(Register dst, Register src, int size) {
+#ifndef NO_JITCODE_CFI
     if (dst.is(rsp))
       size = kInt32Size;
+#endif
     arithmetic_op(0x2B, dst, src, size);
   }
 
   void emit_sub(Register dst, Immediate src, int size) {
+#ifndef NO_JITCODE_CFI
     if (dst.is(rsp))
       size = kInt32Size;
+#endif
     immediate_arithmetic_op(0x5, dst, src, size);
   }
 

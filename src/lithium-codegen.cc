@@ -80,6 +80,7 @@ bool LCodeGenBase::GenerateBody() {
     }
     if (!emit_instructions) continue;
 
+#ifndef NO_JTICODE_CFI
     // If this basic block is not far away from the last lazy-bailout position,
     // this block would be overwritten by the deoptimization patch, which would
     // result in verification failure. Therefore, we emit enough padding bytes
@@ -87,6 +88,7 @@ bool LCodeGenBase::GenerateBody() {
     if (instr->IsLabel()) {
       GenerateDeoptPadding();
     }
+#endif
 
     if (FLAG_code_comments && instr->HasInterestingComment(codegen)) {
       Comment(";;; <@%d,#%d> %s",
@@ -108,7 +110,8 @@ bool LCodeGenBase::GenerateBody() {
     GenerateBodyInstructionPost(instr);
   }
   // The following code makes sure that every optimized function always ends
-  // with a terminator instruction, but not a nops.
+  // with a terminator instruction, but not nops. Otherwise the verification
+  // would fail.
   EnsureSpaceForLazyDeoptWithHlt(Deoptimizer::patch_size());
   last_lazy_deopt_pc_ = masm()->pc_offset();
   return !is_aborted();

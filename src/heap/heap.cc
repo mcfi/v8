@@ -2719,7 +2719,7 @@ void Heap::CreateJSConstructEntryStub() {
                             (*stub.GetCode())->entry(),
                             (void*)dummy_JSEntryStub);
 }
-   
+
 void Heap::CreateFixedStubs() {
   // Here we create roots for fixed stubs. They are needed at GC
   // for cooking and uncooking (check out frames.cc).
