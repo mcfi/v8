@@ -908,7 +908,9 @@ class CodeRange {
   }
 
   void RockRegisterCFGMetaData(int type, const void* md, const void* extra) {
+#ifndef NO_V8_CFI
     rock_reg_cfg_metadata(shadow_code_heap, type, md, extra);
+#endif
   }
 
   void RockMoveCode(void *dst, void* src, size_t sz) {

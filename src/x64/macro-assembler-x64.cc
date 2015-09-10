@@ -771,7 +771,8 @@ void MacroAssembler::CallApiFunctionAndReturn(
 
   bind(&end_profiler_check);
 
-  // Call the api function! TODO: replace with an instrumented version.
+  // Call the api function!
+#ifndef NO_V8_CFI
   Label Check;
   Label Try;
   bind(&Try);
@@ -781,6 +782,9 @@ void MacroAssembler::CallApiFunctionAndReturn(
     add_cfg_edge_combo("V8CEntryCallApiGetterStub", bary_offset, pc_offset());
   else
     add_cfg_edge_combo("V8CEntryCallApiFunctionStub", bary_offset, pc_offset());
+#else
+  call_native(rax);
+#endif
 
   if (FLAG_log_timer_events) {
     FrameScope frame(this, StackFrame::MANUAL);
@@ -866,17 +870,23 @@ void MacroAssembler::CallApiFunctionAndReturn(
   LoadAddress(arg_reg_1, ExternalReference::isolate_address(isolate()));
   LoadAddress(rax,
               ExternalReference::delete_handle_scope_extensions(isolate()));
+#ifndef NO_V8_CFI
   Label Check1;
   Label Try1;
   bind(&Try1);
   call_mcfi(rax, r10, r11, &Check1, &bary_offset);
   add_cfg_edge_combo("V8CEntryHandleScopeDeleteExtensions", bary_offset, pc_offset());
+#else
+  call_native(rax);
+#endif
   movp(rax, prev_limit_reg);
   jmp(&leave_exit_frame);
+#ifndef NO_V8_CFI
   bind(&Check);
   check(rax, r10, r11, &Try);
   bind(&Check1);
   check(rax, r10, r11, &Try1);
+#endif
 }
 
 
@@ -4990,22 +5000,28 @@ void MacroAssembler::CallCFunction(Register function, int num_arguments,
   if (emit_debug_code()) {
     CheckStackAlignment();
   }
+#ifndef NO_V8_CFI
   Label MCFICheck;
   Label Try;
   bind(&Try);
   int bary_offset;
   call_mcfi(function, r10, r11, &MCFICheck, &bary_offset);
   add_cfg_edge_combo(centry_name, bary_offset, pc_offset());
+#else
+  call_native(function);
+#endif
   DCHECK(base::OS::ActivationFrameAlignment() != 0);
   DCHECK(num_arguments >= 0);
   int argument_slots_on_stack =
       ArgumentStackSlotsForCFunctionCall(num_arguments);
   movp(rsp, Operand(rsp, argument_slots_on_stack * kRegisterSize));
+#ifndef NO_V8_CFI
   Label cont;
   jmp(&cont, Label::kNear);
   bind(&MCFICheck);
   check(function, r10, r11, &Try);
   bind(&cont);
+#endif
 }
 
 

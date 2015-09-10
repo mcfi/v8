@@ -117,7 +117,9 @@ RegExpMacroAssemblerX64::RegExpMacroAssemblerX64(
       backtrack_label_(),
       exit_label_() {
   DCHECK_EQ(0, registers_to_save % 2);
+#ifndef NO_V8_CFI
   __ Nop(8);
+#endif
   __ jmp(&entry_label_);   // We'll write the entry code when we know more.
   __ bind(&start_label_);  // And then continue from here.
 }
@@ -895,6 +897,7 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
 #endif
   // Exit function frame, restore previous one.
   __ popq(rbp);
+#ifndef NO_V8_CFI
   // This routine might be recursively executed, so it might
   // return to the JIT compiler or itself, and we need to
   // distinguish these two different kinds of cases in order to
@@ -913,6 +916,9 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   __ bind(&out_code_heap_return);
   __ ret_mcfi(); // return to the JIT compiler
   __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)dummy_RegExpExecute);
+#else
+  __ ret_native(0);
+#endif
   // Backtrack code (branch target for conditional backtracks).
   if (backtrack_label_.is_linked()) {
     __ bind(&backtrack_label_);
@@ -1009,6 +1015,7 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   isolate->code_range()->
     RockFillCode(code->instruction_start(), 0,
                  code->code_size(), ROCK_VERIFY);
+#ifndef NO_V8_CFI
   // the code can be either targeted by the C++ side or the JS side, so
   // we added 8-byte nop padding at the beginning. The JS side jumps to
   // the nop padding, but the C++ side jumps after the padding.
@@ -1032,6 +1039,7 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
       RockRegisterCFGMetaData(ROCK_RAI, masm_.CEC[i].name,
                               (void*)(code->instruction_start() + masm_.CEC[i].rai));
   }
+#endif
   return Handle<HeapObject>::cast(code);
 }
 

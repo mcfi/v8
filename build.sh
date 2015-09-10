@@ -5,11 +5,12 @@
 export MCFI_SDK=/home/ben/MCFI/toolchain
 
 # Add -Xclang -mdisable-cfi to disable CFI instrumentation for
-# the JIT compiler's code; also pass -DNO_CENTRY_CFI to disable the MCFI
-# instrumentation for the CEntries. The runtime needs to be built with
+# the JIT compiler's code; also pass -DNO_V8_CFI to disable the MCFI
+# instrumentation for the CEntries and registration of metadata. The
+# runtime needs to be built with
 # NOCFI=1 NOJCV=1 to disable CFG gen and JIT code verification
-#export CXX="$MCFI_SDK/bin/clang++ -Xclang -mdisable-cfi -DNO_CENTRY_CFI -DNO_JITCODE_CFI"
-#export CC="$MCFI_SDK/bin/clang -Xclang -mdisable-cfi -DNO_CENTRY_CFI -DNO_JITCODE_CFI"
+#export CXX="$MCFI_SDK/bin/clang++ -Xclang -mdisable-cfi -DNO_V8_CFI -DNO_JITCODE_CFI"
+#export CC="$MCFI_SDK/bin/clang -Xclang -mdisable-cfi -DNO_V8_CFI -DNO_JITCODE_CFI"
 
 # Add -DNO_JITCODE_CFI to compiler flags to disable CFI instrumentation
 # for the JITted code and JEntries; the runtime needs to be built with

@@ -137,6 +137,7 @@ NativeRegExpMacroAssembler::Result NativeRegExpMacroAssembler::Execute(
   Address stack_base = stack_scope.stack()->stack_base();
 
   int direct_call = 0;
+#ifndef NO_V8_CFI
   // Jump over the 8-byte nop padding
   int result = CALL_GENERATED_REGEXP_CODE(code->entry()+8,
                                           input,
@@ -148,6 +149,18 @@ NativeRegExpMacroAssembler::Result NativeRegExpMacroAssembler::Execute(
                                           stack_base,
                                           direct_call,
                                           isolate);
+#else
+  int result = CALL_GENERATED_REGEXP_CODE(code->entry(),
+                                          input,
+                                          start_offset,
+                                          input_start,
+                                          input_end,
+                                          output,
+                                          output_size,
+                                          stack_base,
+                                          direct_call,
+                                          isolate);
+#endif
   DCHECK(result >= RETRY);
 
   if (result == EXCEPTION && !isolate->has_pending_exception()) {

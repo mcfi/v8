@@ -875,7 +875,7 @@ class Assembler : public AssemblerBase {
   void int3();
   void nop();
   void ret(int imm16);
-  void ret(void);
+  void ret_native(int imm16);
   void ret_mcfi(void);
   void setcc(Condition cc, Register reg);
 

@@ -2332,13 +2332,16 @@ void CEntryStub::Generate(MacroAssembler* masm) {
   __ movp(rsi, r15);  // argv.
   __ Move(rdx, ExternalReference::isolate_address(isolate()));
 #endif  // _WIN64
+#ifndef NO_V8_CFI
   Label MCFICheck;
   Label Try;
   __ bind(&Try);
   int bary_offset;
   __ call_mcfi(rbx, r10, r11, &MCFICheck, &bary_offset);
   __ add_cfg_edge_combo("V8CEntryRuntime", bary_offset, masm->pc_offset());
-  // __ call_native(rbx);
+#else
+  __ call_native(rbx);
+#endif
   // Result is in rax - do not destroy this register!
 
 #ifdef _WIN64
@@ -2411,8 +2414,10 @@ void CEntryStub::Generate(MacroAssembler* masm) {
 
   __ bind(&throw_termination_exception);
   __ ThrowUncatchable(rax);
+#ifndef NO_V8_CFI
   __ bind(&MCFICheck);
   __ check(rbx, r10, r11, &Try);
+#endif
 }
 
 
@@ -2577,6 +2582,7 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
 
   // Restore frame pointer and return.
   __ popq(rbp);
+#ifndef NO_V8_CFI
   __ ret_mcfi();
 
   extern Object* dummy_JSEntryStub(byte* entry,
@@ -2585,6 +2591,9 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
                                    int argc,
                                    Object*** args);
   __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)(dummy_JSEntryStub));
+#else
+  __ ret_native(0);
+#endif
 }
 
 
@@ -2708,7 +2717,9 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
   __ movp(scratch, FieldOperand(scratch, Map::kPrototypeOffset));
   __ jmp(&loop);
 
+#ifndef NO_V8_CFI
   Label Try1, Try2, Check1, Check2;
+#endif
 
   __ bind(&is_instance);
   if (!HasCallSiteInlineCheck()) {
@@ -2738,10 +2749,14 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(rdx, rsp);
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
+#ifndef NO_V8_CFI
     __ bind(&Try1);
     int bary_offset;
     __ call_mcfi(rax, r10, r11, &Check1, &bary_offset);
     __ add_cfg_edge_combo("V8CEntrySRockFillData", bary_offset, masm->pc_offset());
+#else
+    __ call_native(rax);
+#endif
     __ popq(rax);
     __ popq(rcx);
     __ popq(rdx);
@@ -2784,10 +2799,14 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ movq(rdx, rsp);
     __ movq(rcx, Immediate(1)); // one byte
     __ movq(rax, (size_t)(CodeRange::SRockFillData));
+#ifndef NO_V8_CFI
     __ bind(&Try2);
     int bary_offset;
     __ call_mcfi(rax, r10, r11, &Check2, &bary_offset);
     __ add_cfg_edge_combo("V8CEntrySRockFillData", bary_offset, masm->pc_offset());
+#else
+    __ call_native(rax);
+#endif
     __ popq(rax);
     __ popq(rcx);
     __ popq(rdx);
@@ -2832,10 +2851,12 @@ void InstanceofStub::Generate(MacroAssembler* masm) {
     __ ret(((HasArgsInRegisters() ? 0 : 2) + extra_argument_offset) *
            kPointerSize);
   }
+#ifndef NO_V8_CFI
   __ bind(&Check1);
   __ check(rax, r10, r11, &Try1);
   __ bind(&Check2);
   __ check(rax, r10, r11, &Try2);
+#endif
 }
 
 

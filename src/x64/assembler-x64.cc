@@ -1820,10 +1820,17 @@ void Assembler::pushfq() {
   emit(0x9C);
 }
 
-//void Assembler::ret(void) {
-//  EnsureSpace ensure_space(this);
-//  emit(0xc3);
-//}
+void Assembler::ret_native(int imm16) {
+  EnsureSpace ensure_space(this);
+  DCHECK(is_uint16(imm16));
+  if (imm16 == 0) {
+    emit(0xC3);
+  } else {
+    emit(0xC2);
+    emit(imm16 & 0xFF);
+    emit((imm16 >> 8) & 0xFF);
+  }
+}
 
 void Assembler::ret_mcfi(void) {
   EnsureSpace ensure_space(this);
