@@ -568,7 +568,12 @@ class Assembler : public AssemblerBase {
   // and the return address pushed on the stack.
   static const int kCallTargetAddressOffset = 4;  // Use 32-bit displacement.
   // The length of call(kScratchRegister).
+#ifndef NO_CFI
+  // A CFI checked indirect call r10 is of 14 bytes
   static const int kCallScratchRegisterInstructionLength = 14;
+#else
+  static const int kCallScratchRegisterInstructionLength = 3;
+#endif
   // The length of call(Immediate32).
   static const int kShortCallInstructionLength = 5;
   // The length of movq(kScratchRegister, address).

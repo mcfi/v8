@@ -337,9 +337,12 @@ void FullCodeGenerator::EmitProfilingCounterReset() {
   __ movp(FieldOperand(rbx, Cell::kValueOffset), kScratchRegister);
 }
 
-
+#ifndef NO_CFI
+// CFI adds a 0x67 prefix byte for sandboxing.
 static const byte kJnsOffset = kPointerSize == kInt64Size ? 0x1e : 0x15;
-
+#else
+static const byte kJnsOffset = kPointerSize == kInt64Size ? 0x1d : 0x14;
+#endif
 
 void FullCodeGenerator::EmitBackEdgeBookkeeping(IterationStatement* stmt,
                                                 Label* back_edge_target) {
