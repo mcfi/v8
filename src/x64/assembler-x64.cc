@@ -1843,16 +1843,28 @@ void Assembler::ret_mcfi(int *bary_offset) {
   emit(0x48);emit(0x8b);emit(0x3c);emit(0x25);
   emit(0x00);emit(0x00);emit(0x00);emit(0x00);
   *bary_offset = pc_offset();
-  // cmpq rdi, %gs:(rcx)
+  // movq %gs:(dst), tid
   emit(0x65);
-  cmpq(Operand(rcx, 0), rdi);
+  movq(rsi, Operand(rcx, 0));
+  // cmpq %rdi, %rsi
+  cmpq(rsi, rdi);
   // jne check
   Label Check;
   j(not_equal, &Check, Label::kNear);
   // jmp *%rcx
   emit(0xff);emit(0xe1);
   bind(&Check);
-  check(rcx, rdi, rsi, &Try);
+  // testb $0x1, tid
+  testb(rsi, Immediate(1));
+  // je hlt
+  Label Hlt;
+  j(equal, &Hlt, Label::kNear);
+  // cmpl bid, tid
+  cmpl(rsi, rdi);
+  j(not_equal, &Try);
+  bind(&Hlt);
+  // hlt
+  hlt();
 }
 
 void Assembler::ret(int imm16) {

@@ -2759,17 +2759,18 @@ if True:
     MOVL = ['0x89 0xc9', '0x8b 0xc9'] # movl %ecx, %ecx
     # the bid slot will be filled by later calls
     MOVBID = '0x65 0x48 0x8b 0x3c 0x25 0x00 0x00 0x00 0x00'
-    CMPQ = '0x65 0x48 0x39 0x39'
+    MOVTID = '0x65 0x48 0x8b 0x31'
+    CMPQ = ['0x48 0x39 0xfe', '0x48 0x8b 0xfe']
     JNECHECK = '0x75 0x02'
     JMPR = '0xff 0xe1'
-    MOVTID = '0x65 0x48 0x8b 0x31'
     TESTB = '0x40 0xf6 0xc6 0x01'
     JEHLT = '0x74 0x04'
     CMPL = ['0x39 0xfe', '0x3b 0xfe']
     JNETRY = '0x75 0xe1'
     HLT = '0xf4'
     for movl in MOVL:
-        for cmpl in CMPL:
-            MCFIRET.addform(None, None, '%s %s %s %s %s %s %s %s %s %s %s' %
-                            (movl, MOVBID, CMPQ, JNECHECK, JMPR, MOVTID, TESTB,
-                             JEHLT, cmpl, JNETRY, HLT))
+        for cmpq in CMPQ:
+            for cmpl in CMPL:
+                MCFIRET.addform(None, None, '%s %s %s %s %s %s %s %s %s %s %s' %
+                                (movl, MOVBID, MOVTID, cmpq, JNECHECK, JMPR, TESTB,
+                                 JEHLT, cmpl, JNETRY, HLT))
