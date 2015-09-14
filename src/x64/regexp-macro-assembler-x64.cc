@@ -914,8 +914,9 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   __ j(greater_equal, &out_code_heap_return);
   __ ret(0); // return inside the code heap
   __ bind(&out_code_heap_return);
-  __ ret_mcfi(); // return to the JIT compiler
-  __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)dummy_RegExpExecute);
+  int bary_offset;
+  __ ret_mcfi(&bary_offset); // return to the JIT compiler
+  __ add_mcfi_ret(bary_offset, (uintptr_t)dummy_RegExpExecute);
 #else
   __ ret_native(0);
 #endif

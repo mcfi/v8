@@ -1832,7 +1832,7 @@ void Assembler::ret_native(int imm16) {
   }
 }
 
-void Assembler::ret_mcfi(void) {
+void Assembler::ret_mcfi(int *bary_offset) {
   EnsureSpace ensure_space(this);
   popq(rcx);
   movl(rcx, rcx);
@@ -1842,6 +1842,7 @@ void Assembler::ret_mcfi(void) {
   emit(0x65);
   emit(0x48);emit(0x8b);emit(0x3c);emit(0x25);
   emit(0x00);emit(0x00);emit(0x00);emit(0x00);
+  *bary_offset = pc_offset();
   // cmpq rdi, %gs:(rcx)
   emit(0x65);
   cmpq(Operand(rcx, 0), rdi);

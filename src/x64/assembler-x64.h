@@ -876,7 +876,7 @@ class Assembler : public AssemblerBase {
   void nop();
   void ret(int imm16);
   void ret_native(int imm16);
-  void ret_mcfi(void);
+  void ret_mcfi(/*out*/int *bary_offset);
   void setcc(Condition cc, Register reg);
 
   // Label operations & relative jumps (PPUM Appendix D)

@@ -2583,14 +2583,15 @@ void JSEntryStub::Generate(MacroAssembler* masm) {
   // Restore frame pointer and return.
   __ popq(rbp);
 #ifndef NO_V8_CFI
-  __ ret_mcfi();
+  int bary_offset;
+  __ ret_mcfi(&bary_offset);
 
   extern Object* dummy_JSEntryStub(byte* entry,
                                    Object* function,
                                    Object* receiver,
                                    int argc,
                                    Object*** args);
-  __ add_mcfi_ret(__ pc_offset() - 0x17, (uintptr_t)(dummy_JSEntryStub));
+  __ add_mcfi_ret(bary_offset, (uintptr_t)(dummy_JSEntryStub));
 #else
   __ ret_native(0);
 #endif
